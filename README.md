@@ -96,6 +96,7 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 - `POST /knowledge/ingest` 知识入库
 - `GET /knowledge/professional/stats` 专业中医数据库索引状态
+- `POST /knowledge/professional/rebuild` 重建专业中医数据库（SQLite）
 - `POST /intake/parse` 接诊结构化抽取
 - `POST /perception/analyze` 多模态感知（MVP 规则模拟）
 - `POST /reason/syndrome` 证候推理与排序
@@ -130,7 +131,7 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 ## 5. MVP 说明
 
 - 当前为规则+检索式可运行版本，重点验证“平台骨架与闭环流程”。
-- `reason` 与 `research` 已接入专业中医数据库检索（CSV/HTML 文本证据）。
+- `reason`、`research`、`smart-qa` 已接入专业中医数据库检索（SQLite 索引 + 证据引用分析）。
 - 未实现真实模型推理与医疗级处方决策，所有输出均需医生确认。
 - 数据存储为本地 JSON/JSONL，便于替换到数据库与消息队列。
 
@@ -148,6 +149,12 @@ python scripts/seed_demo_data.py
 
 ```bash
 python scripts/smoke_test_all.py
+```
+
+重建“中医药”目录数据库索引（首次建议执行）：
+
+```bash
+python scripts/build_professional_db.py
 ```
 
 ## 7. 设计交付文档

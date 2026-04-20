@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中药研发工作台 - 岐衡中医智能体平台</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="ambient-shape shape-a"></div>
+  <div class="ambient-shape shape-b"></div>
+
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-wrap">
+        <p class="brand-kicker">QIHENG TCM AI PLATFORM</p>
+        <h1 class="brand-title">岐衡中医智能体平台</h1>
+        <p class="brand-subtitle">统一中台能力支撑临床辅助、科研传承、中药研发三类场景</p>
+      </div>
+
+      <div class="topbar-tools">
+        <label class="global-search-wrap">
+          <input id="global-search" type="text" placeholder="全局搜索：证候 / 方剂 / 医案 / 问答 / 规则 / 审计">
+        </label>
+        <div class="status-chip-group" id="global-status">
+          <span class="status-chip">模型版本：MVP-0.2</span>
+          <span class="status-chip">机构：示例机构</span>
+          <span class="status-chip">角色：平台管理员</span>
+          <span class="status-chip" id="api-health-chip">API: checking</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/index.html" class="">平台总览</a>
+      <a href="/clinical.html" class="">临床辅助</a>
+      <a href="/research.html" class="">科研传承</a>
+      <a href="/smart-qa.html" class="">智慧问答</a>
+      <a href="/rnd.html" class="active">中药研发</a>
+      <a href="/knowledge-center.html" class="">知识中台</a>
+      <a href="/reasoning-center.html" class="">推理中台</a>
+      <a href="/expert-review.html" class="">专家审核</a>
+      <a href="/operations.html" class="">运营治理</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero card">
+  <div>
+    <p class="section-kicker">R&D Collaboration</p>
+    <h2 class="hero-title">中药研发工作台</h2>
+    <p class="hero-text">围绕“药材-方剂-症状-证候-现代研究”关系链进行辅助分析，并将研发结论沉淀为可检索知识资产。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>感知输入</span><strong>tongue/face/herb</strong></div>
+    <div class="mini-stat"><span>关系检索</span><strong>专业库 + 本地库</strong></div>
+    <div class="mini-stat"><span>项目沉淀</span><strong>知识中台</strong></div>
+  </div>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>多模态感知分析</h3>
+    <form id="perception-form" class="form-grid">
+      <label>
+        输入类型
+        <select name="image_type">
+          <option value="tongue">tongue</option>
+          <option value="face">face</option>
+          <option value="herb">herb</option>
+        </select>
+      </label>
+      <label class="full">
+        观察描述（逗号分隔）
+        <input type="text" name="observations" value="舌淡, 苔白腻, 齿痕">
+      </label>
+      <label class="full">
+        备注
+        <textarea name="notes" rows="3" placeholder="可输入紫暗、裂纹、颜色异常等"></textarea>
+      </label>
+      <button type="submit" class="btn">执行感知分析</button>
+    </form>
+    <div class="result-box" id="perception-result-box">等待感知分析。</div>
+  </article>
+
+  <article class="card">
+    <h3>关系检索（方剂/药材/证候）</h3>
+    <form id="search-form" class="form-grid">
+      <label class="full">
+        检索词
+        <input type="text" name="q" value="痰湿瘀阻 方剂 药材 治法">
+      </label>
+      <button type="submit" class="btn">检索本地知识中台</button>
+    </form>
+
+    <form id="professional-search-form" class="form-grid top-gap">
+      <label class="full">
+        专业库检索词
+        <input type="text" name="q" value="痰湿瘀阻 治法 方药 医案">
+      </label>
+      <button type="submit" class="btn secondary">检索专业数据库</button>
+    </form>
+
+    <div class="evidence-list top-gap" id="relation-evidence-list"></div>
+
+    <h3 class="top-gap">研发决策区</h3>
+    <div id="rnd-decision-list" class="stack-list">
+      <div class="result-box">执行关系检索后生成“配伍建议/风险禁忌/潜在适应证”草案。</div>
+    </div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>研发记录沉淀</h3>
+    <form id="rnd-ingest-form" class="form-grid">
+      <label>
+        记录标题
+        <input type="text" name="title" value="研发记录：痰湿瘀阻配伍分析">
+      </label>
+      <label>
+        标签（逗号分隔）
+        <input type="text" name="tags" value="研发, 方剂关系, 药材">
+      </label>
+      <label class="full">
+        分析结论
+        <textarea name="content" rows="5" placeholder="记录候选配伍、证据出处与结论"></textarea>
+      </label>
+      <button type="submit" class="btn">写入知识中台</button>
+    </form>
+    <pre class="result" id="rnd-ingest-result"></pre>
+  </article>
+
+  <article class="card">
+    <h3>专业库状态</h3>
+    <button id="load-prof-stats" class="btn secondary">加载专业库状态</button>
+    <pre class="result" id="prof-stats-result"></pre>
+  </article>
+</section>
+  </main>
+
+  <footer class="footer">岐衡中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/rnd.js"></script>
+</body>
+</html>

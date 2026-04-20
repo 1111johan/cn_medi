@@ -5,11 +5,13 @@ import hashlib
 import html as html_lib
 import os
 import re
+import sqlite3
 import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
-from app.core.config import PROFESSIONAL_DATA_DIR
+from app.core.config import DATA_DIR, PROFESSIONAL_DATA_DIR
 
 
 STOPWORDS = {
@@ -56,90 +58,229 @@ DOMAIN_TERMS = [
 SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".json", ".jsonl"}
 SUPPORTED_STRUCTURED_EXTENSIONS = {".csv"}
 SUPPORTED_HTML_EXTENSIONS = {".html", ".htm"}
+SUPPORTED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS | SUPPORTED_STRUCTURED_EXTENSIONS | SUPPORTED_HTML_EXTENSIONS
+
+DEFAULT_DB_PATH = DATA_DIR / "professional_knowledge.db"
 
 
 class ProfessionalKnowledgeService:
-    def __init__(self, root_dir: Path):
+    """Build a searchable SQLite database from professional TCM files and query it."""
+
+    def __init__(self, root_dir: Path, db_path: Path | None = None):
         self.root_dir = root_dir
-        self._records: List[Dict[str, Any]] = []
-        self._loaded = False
+        self.db_path = db_path or Path(os.getenv("TCM_PRO_DB_PATH", str(DEFAULT_DB_PATH)))
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+
         self._lock = threading.Lock()
-
-    def _ensure_loaded(self) -> None:
-        if self._loaded:
-            return
-
-        with self._lock:
-            if self._loaded:
-                return
-            self._records = self._load_records()
-            self._loaded = True
+        self._ready = False
+        self._last_check_at = 0.0
+        self._check_interval_seconds = float(os.getenv("TCM_PRO_REBUILD_CHECK_SECONDS", "30"))
 
     def stats(self) -> Dict[str, Any]:
-        self._ensure_loaded()
+        self._ensure_index_ready()
+        with self._connect() as conn:
+            record_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
+            signature = self._meta_get(conn, "dataset_signature")
+            indexed_at = self._meta_get(conn, "indexed_at")
+            indexed_files = int(self._meta_get(conn, "indexed_files") or "0")
+
         return {
             "root_dir": str(self.root_dir),
+            "db_path": str(self.db_path),
             "available": self.root_dir.exists(),
-            "record_count": len(self._records),
+            "record_count": int(record_count),
+            "indexed_files": indexed_files,
+            "indexed_at": indexed_at,
+            "dataset_signature": signature,
         }
 
+    def rebuild(self) -> Dict[str, Any]:
+        self._ensure_index_ready(force=True)
+        return self.stats()
+
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        self._ensure_loaded()
-        if not query.strip():
+        self._ensure_index_ready()
+        q = query.strip()
+        if not q:
             return []
 
-        terms = self._extract_terms(query)
-        results: List[Dict[str, Any]] = []
+        terms = self._extract_terms(q)
+        like_terms = [q] + terms[:8]
 
-        for record in self._records:
-            score = self._score(query, terms, record)
+        where_clauses: List[str] = []
+        params: List[Any] = []
+        for term in like_terms:
+            where_clauses.append("(title LIKE ? OR content LIKE ?)")
+            kw = f"%{term}%"
+            params.extend([kw, kw])
+
+        sql = (
+            "SELECT object_id, title, content, source_type, source_path "
+            "FROM professional_documents "
+            f"WHERE {' OR '.join(where_clauses)} "
+            "LIMIT ?"
+        )
+        params.append(max(top_k * 60, 180))
+
+        results: List[Dict[str, Any]] = []
+        with self._connect() as conn:
+            rows = conn.execute(sql, params).fetchall()
+
+        for row in rows:
+            title = str(row["title"])
+            content = str(row["content"])
+            score = self._score(q, terms, {"title": title, "content": content})
             if score <= 0:
                 continue
             results.append(
                 {
-                    **record,
+                    "object_id": str(row["object_id"]),
+                    "title": title,
+                    "source_type": str(row["source_type"]),
+                    "source_path": str(row["source_path"]),
                     "score": round(score, 3),
-                    "snippet": self._build_snippet(record["content"], terms),
+                    "snippet": self._build_snippet(content, terms or [q]),
+                }
+            )
+
+        if not results and q:
+            results = self._fallback_search(q, top_k=top_k, terms=terms)
+
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+
+    def _fallback_search(self, query: str, top_k: int, terms: List[str]) -> List[Dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT object_id, title, content, source_type, source_path "
+                "FROM professional_documents ORDER BY rowid DESC LIMIT ?",
+                (max(top_k * 25, 120),),
+            ).fetchall()
+
+        results: List[Dict[str, Any]] = []
+        for row in rows:
+            title = str(row["title"])
+            content = str(row["content"])
+            score = self._score(query, terms, {"title": title, "content": content})
+            if score <= 0:
+                continue
+            results.append(
+                {
+                    "object_id": str(row["object_id"]),
+                    "title": title,
+                    "source_type": str(row["source_type"]),
+                    "source_path": str(row["source_path"]),
+                    "score": round(score, 3),
+                    "snippet": self._build_snippet(content, terms or [query]),
                 }
             )
 
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    def _load_records(self) -> List[Dict[str, Any]]:
-        if not self.root_dir.exists():
-            return []
+    def _ensure_index_ready(self, force: bool = False) -> None:
+        now = time.time()
+        if not force and self._ready and (now - self._last_check_at) < self._check_interval_seconds:
+            return
 
-        records: List[Dict[str, Any]] = []
-        file_paths = [p for p in self.root_dir.rglob("*") if p.is_file()]
-        file_paths.sort()
+        with self._lock:
+            now = time.time()
+            if not force and self._ready and (now - self._last_check_at) < self._check_interval_seconds:
+                return
 
-        max_files = int(os.getenv("TCM_PRO_MAX_FILES", "500"))
-        max_records = int(os.getenv("TCM_PRO_MAX_RECORDS", "5000"))
+            files = self._collect_supported_files()
+            signature = self._calculate_signature(files)
 
-        for file_path in file_paths[:max_files]:
-            if len(records) >= max_records:
+            with self._connect() as conn:
+                self._init_schema(conn)
+                stored_signature = self._meta_get(conn, "dataset_signature")
+
+            if force or (not self.db_path.exists()) or (stored_signature != signature):
+                self._rebuild_index(files=files, signature=signature)
+
+            self._ready = True
+            self._last_check_at = time.time()
+
+    def _rebuild_index(self, files: List[Path], signature: str) -> None:
+        max_records = int(os.getenv("TCM_PRO_MAX_RECORDS", "15000"))
+
+        docs_to_insert: List[Tuple[str, str, str, str, str, str, int]] = []
+        for file_path in files:
+            if len(docs_to_insert) >= max_records:
                 break
 
-            ext = file_path.suffix.lower()
             try:
-                if ext in SUPPORTED_STRUCTURED_EXTENSIONS:
-                    docs = self._load_csv_records(file_path)
-                elif ext in SUPPORTED_HTML_EXTENSIONS:
-                    docs = self._load_html_record(file_path)
-                elif ext in SUPPORTED_TEXT_EXTENSIONS:
-                    docs = self._load_text_record(file_path)
-                else:
-                    docs = []
+                docs = self._load_docs_from_file(file_path)
             except Exception:
                 continue
 
+            rel_path = str(file_path.relative_to(self.root_dir))
             for doc in docs:
-                records.append(doc)
-                if len(records) >= max_records:
+                docs_to_insert.append(
+                    (
+                        str(doc["object_id"]),
+                        str(doc["title"]),
+                        str(doc["content"]),
+                        str(doc["source_type"]),
+                        str(doc["source_path"]),
+                        rel_path,
+                        int(doc.get("row_index", 0)),
+                    )
+                )
+                if len(docs_to_insert) >= max_records:
                     break
 
-        return records
+        with self._connect() as conn:
+            self._init_schema(conn)
+            conn.execute("DELETE FROM professional_documents")
+            conn.executemany(
+                "INSERT OR REPLACE INTO professional_documents "
+                "(object_id, title, content, source_type, source_path, source_file, row_index) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                docs_to_insert,
+            )
+            self._meta_set(conn, "dataset_signature", signature)
+            self._meta_set(conn, "indexed_at", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            self._meta_set(conn, "indexed_files", str(len(files)))
+            self._meta_set(conn, "root_dir", str(self.root_dir))
+            conn.commit()
+
+    def _collect_supported_files(self) -> List[Path]:
+        if not self.root_dir.exists():
+            return []
+
+        max_files = int(os.getenv("TCM_PRO_MAX_FILES", "5000"))
+        files = [
+            p
+            for p in self.root_dir.rglob("*")
+            if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
+        ]
+        files.sort()
+        return files[:max_files]
+
+    def _calculate_signature(self, files: List[Path]) -> str:
+        h = hashlib.sha1()
+        h.update(str(self.root_dir).encode("utf-8"))
+        for p in files:
+            try:
+                st = p.stat()
+            except OSError:
+                continue
+            rel = str(p.relative_to(self.root_dir))
+            h.update(rel.encode("utf-8", errors="ignore"))
+            h.update(str(st.st_size).encode("utf-8"))
+            h.update(str(st.st_mtime_ns).encode("utf-8"))
+        return h.hexdigest()
+
+    def _load_docs_from_file(self, file_path: Path) -> List[Dict[str, Any]]:
+        ext = file_path.suffix.lower()
+        if ext in SUPPORTED_STRUCTURED_EXTENSIONS:
+            return self._load_csv_records(file_path)
+        if ext in SUPPORTED_HTML_EXTENSIONS:
+            return self._load_html_record(file_path)
+        if ext in SUPPORTED_TEXT_EXTENSIONS:
+            return self._load_text_record(file_path)
+        return []
 
     def _load_csv_records(self, file_path: Path) -> List[Dict[str, Any]]:
         text = self._read_text(file_path)
@@ -153,7 +294,7 @@ class ProfessionalKnowledgeService:
         reader = csv.DictReader(lines)
         docs: List[Dict[str, Any]] = []
 
-        max_rows = int(os.getenv("TCM_PRO_MAX_CSV_ROWS", "400"))
+        max_rows = int(os.getenv("TCM_PRO_MAX_CSV_ROWS", "1200"))
         for idx, row in enumerate(reader, start=1):
             if idx > max_rows:
                 break
@@ -171,6 +312,7 @@ class ProfessionalKnowledgeService:
                     "content": content,
                     "source_type": "professional_csv",
                     "source_path": str(file_path.relative_to(self.root_dir)),
+                    "row_index": idx,
                 }
             )
 
@@ -181,7 +323,6 @@ class ProfessionalKnowledgeService:
         if not html_text:
             return []
 
-        # 去除脚本样式
         html_text = re.sub(r"<script[\\s\\S]*?</script>", " ", html_text, flags=re.IGNORECASE)
         html_text = re.sub(r"<style[\\s\\S]*?</style>", " ", html_text, flags=re.IGNORECASE)
 
@@ -191,11 +332,10 @@ class ProfessionalKnowledgeService:
         plain = re.sub(r"<[^>]+>", " ", html_text)
         plain = html_lib.unescape(plain)
         plain = re.sub(r"\s+", " ", plain).strip()
-
         if not plain:
             return []
 
-        max_chars = int(os.getenv("TCM_PRO_MAX_HTML_CHARS", "20000"))
+        max_chars = int(os.getenv("TCM_PRO_MAX_HTML_CHARS", "36000"))
         plain = plain[:max_chars]
 
         return [
@@ -205,6 +345,7 @@ class ProfessionalKnowledgeService:
                 "content": plain,
                 "source_type": "professional_html",
                 "source_path": str(file_path.relative_to(self.root_dir)),
+                "row_index": 0,
             }
         ]
 
@@ -212,11 +353,12 @@ class ProfessionalKnowledgeService:
         text = self._read_text(file_path)
         if not text:
             return []
+
         text = re.sub(r"\s+", " ", text).strip()
         if not text:
             return []
 
-        max_chars = int(os.getenv("TCM_PRO_MAX_TEXT_CHARS", "16000"))
+        max_chars = int(os.getenv("TCM_PRO_MAX_TEXT_CHARS", "24000"))
         text = text[:max_chars]
 
         return [
@@ -226,8 +368,53 @@ class ProfessionalKnowledgeService:
                 "content": text,
                 "source_type": "professional_text",
                 "source_path": str(file_path.relative_to(self.root_dir)),
+                "row_index": 0,
             }
         ]
+
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.execute("PRAGMA temp_store = MEMORY")
+        return conn
+
+    def _init_schema(self, conn: sqlite3.Connection) -> None:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS professional_documents (
+                object_id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source_type TEXT NOT NULL,
+                source_path TEXT NOT NULL,
+                source_file TEXT NOT NULL,
+                row_index INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS professional_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_prof_title ON professional_documents(title)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_prof_source_type ON professional_documents(source_type)")
+
+    def _meta_get(self, conn: sqlite3.Connection, key: str) -> str:
+        row = conn.execute("SELECT value FROM professional_meta WHERE key = ?", (key,)).fetchone()
+        return "" if not row else str(row[0])
+
+    def _meta_set(self, conn: sqlite3.Connection, key: str, value: str) -> None:
+        conn.execute(
+            "INSERT INTO professional_meta(key, value) VALUES(?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
 
     def _read_text(self, file_path: Path) -> str:
         encodings = ["utf-8-sig", "utf-8", "gb18030", "gbk"]
@@ -261,15 +448,13 @@ class ProfessionalKnowledgeService:
 
         fields: List[Tuple[str, str]] = []
 
-        # 优先抽取临床语义字段
         for key in preferred_keys:
             value = row.get(key)
             if value and self._is_meaningful_text(value):
                 fields.append((key, self._normalize(value)))
 
-        # 再补充英文特征字段（舌面相关）
         for key, value in row.items():
-            if len(fields) >= 14:
+            if len(fields) >= 18:
                 break
             if not value:
                 continue
@@ -288,7 +473,6 @@ class ProfessionalKnowledgeService:
         if not text:
             return False
 
-        # 过滤纯数值和文件名字段
         if re.fullmatch(r"[+-]?\d+(\.\d+)?", text):
             return False
         if text.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".gif")):
@@ -303,6 +487,17 @@ class ProfessionalKnowledgeService:
     def _extract_terms(self, text: str) -> List[str]:
         cleaned = re.sub(r"[^\w\u4e00-\u9fff]+", " ", text)
         terms = [w for w in cleaned.split() if len(w) >= 2 and w not in STOPWORDS]
+
+        # 对连续中文输入做轻量切片，避免“失眠口苦舌红”这类无空格问句漏检
+        cjk_chunks = re.findall(r"[\u4e00-\u9fff]{2,}", text)
+        for chunk in cjk_chunks:
+            if len(chunk) <= 4:
+                terms.append(chunk)
+                continue
+            for size in (2, 3, 4):
+                for idx in range(0, len(chunk) - size + 1):
+                    terms.append(chunk[idx : idx + size])
+
         for term in DOMAIN_TERMS:
             if term in text:
                 terms.append(term)
@@ -321,19 +516,26 @@ class ProfessionalKnowledgeService:
 
         score = 0.0
         if query in title:
-            score += 4.0
+            score += 4.2
         if query in content:
-            score += 2.5
+            score += 2.7
 
         for term in terms:
             if term in title:
-                score += 1.7
+                score += 1.8
             if term in content:
-                score += 0.8
+                score += 0.85
+
+        # prioritize medically dense sources
+        source_type = str(record.get("source_type", ""))
+        if source_type == "professional_csv":
+            score += 0.2
+        if "医案" in title:
+            score += 0.3
 
         return score
 
-    def _build_snippet(self, content: str, terms: Iterable[str], window: int = 96) -> str:
+    def _build_snippet(self, content: str, terms: Iterable[str], window: int = 140) -> str:
         hit = -1
         for term in terms:
             idx = content.find(term)

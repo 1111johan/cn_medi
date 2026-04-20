@@ -993,6 +993,14 @@ select:focus {
   min-height: calc(100vh - 230px);
 }
 
+.qa-layout.no-avatar {
+  grid-template-columns: 66fr 34fr;
+}
+
+.qa-layout.no-avatar .qa-pane-left {
+  display: none;
+}
+
 .qa-pane-left,
 .qa-pane-center,
 .qa-pane-right {

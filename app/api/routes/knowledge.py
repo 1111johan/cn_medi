@@ -45,6 +45,21 @@ def professional_knowledge_stats() -> dict:
     return professional_knowledge_service.stats()
 
 
+@router.post("/knowledge/professional/rebuild")
+def professional_knowledge_rebuild(request: Request) -> dict:
+    result = professional_knowledge_service.rebuild()
+    record_event(
+        event_type="knowledge.professional.rebuild",
+        actor=resolve_actor(request),
+        details={
+            "record_count": result.get("record_count", 0),
+            "indexed_files": result.get("indexed_files", 0),
+            "db_path": result.get("db_path", ""),
+        },
+    )
+    return result
+
+
 @router.get("/knowledge/professional/search")
 def professional_knowledge_search(
     q: str = Query(..., min_length=1),

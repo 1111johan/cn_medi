@@ -17,9 +17,7 @@ const panelEvidence = document.getElementById("panel-evidence");
 const panelGraph = document.getElementById("panel-graph");
 const panelTasks = document.getElementById("panel-tasks");
 
-const avatarStageNode = document.getElementById("avatar-stage");
 const avatarNode = document.getElementById("dh-avatar");
-const avatarCanvasNode = document.getElementById("dh-model-canvas");
 const avatarFallbackNode = document.getElementById("dh-avatar-fallback");
 const avatarStateBadge = document.getElementById("dh-state-badge");
 const avatarStateMain = document.getElementById("avatar-state-main");
@@ -53,25 +51,7 @@ let altPersona = false;
 let latestResult = null;
 let latestQuestion = "";
 let currentCaseId = "";
-let dhRenderLoopId = 0;
-let threeLib = null;
-let OBJLoaderClass = null;
-
-async function loadThreeDeps() {
-  if (threeLib && OBJLoaderClass) {
-    return true;
-  }
-
-  try {
-    const threeModule = await import("/static/vendor/three.module.js");
-    const loaderModule = await import("/static/vendor/OBJLoader.module.js");
-    threeLib = threeModule;
-    OBJLoaderClass = loaderModule.OBJLoader;
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
+let activeModelName = "岐衡·太乙中医大模型";
 
 function setAvatarFallbackText(text) {
   if (!avatarFallbackNode) return;
@@ -81,156 +61,10 @@ function setAvatarFallbackText(text) {
   }
 }
 
-function buildAssetUrl(baseUrl, fileName) {
-  const safeBase = String(baseUrl || "").replace(/\/+$/, "");
-  return `${safeBase}/${encodeURIComponent(String(fileName || ""))}`;
-}
-
-function loadTexture(loader, url) {
-  return new Promise((resolve) => {
-    loader.load(
-      url,
-      (texture) => resolve(texture),
-      undefined,
-      () => resolve(null)
-    );
-  });
-}
-
 async function initDigitalHumanViewer() {
-  if (!avatarNode || !avatarCanvasNode || !avatarStageNode) return;
-  if (avatarNode.dataset.modelReady !== "true") {
-    setAvatarFallbackText("未找到数字人模型文件");
-    return;
-  }
-  if (!(await loadThreeDeps())) {
-    setAvatarFallbackText("3D引擎加载失败");
-    return;
-  }
-
-  const THREE = threeLib;
-  const baseUrl = avatarNode.dataset.modelBase || "/assets/digital-human";
-  const modelFile = avatarNode.dataset.modelFile || "base.obj";
-  const diffuseFile = avatarNode.dataset.texDiffuse || "";
-  const normalFile = avatarNode.dataset.texNormal || "";
-  const roughnessFile = avatarNode.dataset.texRoughness || "";
-  const metallicFile = avatarNode.dataset.texMetallic || "";
-
-  const modelUrl = buildAssetUrl(baseUrl, modelFile);
-  const diffuseUrl = diffuseFile ? buildAssetUrl(baseUrl, diffuseFile) : "";
-  const normalUrl = normalFile ? buildAssetUrl(baseUrl, normalFile) : "";
-  const roughnessUrl = roughnessFile ? buildAssetUrl(baseUrl, roughnessFile) : "";
-  const metallicUrl = metallicFile ? buildAssetUrl(baseUrl, metallicFile) : "";
-
-  setAvatarFallbackText("数字人模型加载中...");
-
-  const renderer = new THREE.WebGLRenderer({
-    canvas: avatarCanvasNode,
-    antialias: true,
-    alpha: true,
-    powerPreference: "high-performance",
-  });
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 1000);
-  camera.position.set(0, 1.38, 3.48);
-
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.05);
-  keyLight.position.set(2.8, 4.6, 2.5);
-  scene.add(keyLight);
-
-  const fillLight = new THREE.HemisphereLight(0xd8f2e7, 0x55422f, 0.84);
-  scene.add(fillLight);
-
-  const rimLight = new THREE.DirectionalLight(0xf6ddb4, 0.42);
-  rimLight.position.set(-3.5, 1.8, -3.4);
-  scene.add(rimLight);
-
-  const modelRoot = new THREE.Group();
-  scene.add(modelRoot);
-
-  const textureLoader = new THREE.TextureLoader();
-  const [diffuseMap, normalMap, roughnessMap, metallicMap] = await Promise.all([
-    diffuseUrl ? loadTexture(textureLoader, diffuseUrl) : Promise.resolve(null),
-    normalUrl ? loadTexture(textureLoader, normalUrl) : Promise.resolve(null),
-    roughnessUrl ? loadTexture(textureLoader, roughnessUrl) : Promise.resolve(null),
-    metallicUrl ? loadTexture(textureLoader, metallicUrl) : Promise.resolve(null),
-  ]);
-
-  const sharedMaterial = new THREE.MeshStandardMaterial({
-    map: diffuseMap || null,
-    normalMap: normalMap || null,
-    roughnessMap: roughnessMap || null,
-    metalnessMap: metallicMap || null,
-    roughness: roughnessMap ? 1.0 : 0.62,
-    metalness: metallicMap ? 1.0 : 0.22,
-    color: diffuseMap ? 0xffffff : 0xd9e2dc,
-  });
-
-  const objLoader = new OBJLoaderClass();
-  objLoader.load(
-    modelUrl,
-    (object3d) => {
-      object3d.traverse((node) => {
-        if (node && node.isMesh) {
-          node.material = sharedMaterial;
-          node.castShadow = false;
-          node.receiveShadow = false;
-        }
-      });
-
-      const bbox = new THREE.Box3().setFromObject(object3d);
-      const size = bbox.getSize(new THREE.Vector3());
-      const maxEdge = Math.max(size.x, size.y, size.z) || 1;
-      const scale = 2.3 / maxEdge;
-      object3d.scale.setScalar(scale);
-
-      const scaledBox = new THREE.Box3().setFromObject(object3d);
-      const center = scaledBox.getCenter(new THREE.Vector3());
-      const minY = scaledBox.min.y;
-      object3d.position.set(-center.x, -minY - 1.08, -center.z);
-
-      modelRoot.add(object3d);
-      avatarNode.classList.add("has-model");
-      setAvatarFallbackText("数字人已就绪");
-    },
-    undefined,
-    () => {
-      setAvatarFallbackText("模型加载失败，请检查模型文件");
-    }
-  );
-
-  const resizeRenderer = () => {
-    const rect = avatarStageNode.getBoundingClientRect();
-    const width = Math.max(220, Math.floor(rect.width - 20));
-    const height = Math.max(260, Math.floor(rect.height - 20));
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-  };
-
-  resizeRenderer();
-  window.addEventListener("resize", resizeRenderer);
-  if (window.ResizeObserver) {
-    const observer = new ResizeObserver(() => resizeRenderer());
-    observer.observe(avatarStageNode);
-  }
-
-  const clock = new THREE.Clock();
-  const renderLoop = () => {
-    const t = clock.getElapsedTime();
-    modelRoot.rotation.y = Math.sin(t * 0.36) * 0.17 + (avatarNode.classList.contains("serious") ? -0.03 : 0.03);
-    modelRoot.position.y = avatarNode.classList.contains("speaking") ? Math.sin(t * 7.2) * 0.03 : 0;
-    renderer.render(scene, camera);
-    dhRenderLoopId = window.requestAnimationFrame(renderLoop);
-  };
-
-  if (dhRenderLoopId) {
-    window.cancelAnimationFrame(dhRenderLoopId);
-  }
-  dhRenderLoopId = window.requestAnimationFrame(renderLoop);
+  if (!avatarNode) return;
+  avatarNode.classList.add("no-digital-human");
+  setAvatarFallbackText("智能问答助手已就绪");
 }
 
 function setPageState(state, mainText, descText) {
@@ -254,13 +88,16 @@ function setPageState(state, mainText, descText) {
   if (avatarStateDesc && descText) avatarStateDesc.textContent = descText;
 }
 
-function setModelChip(riskLevel) {
+function setModelChip(riskLevel, modelName) {
   if (!modelChipNode) return;
+  if (modelName) {
+    activeModelName = String(modelName);
+  }
   if (riskLevel === "caution") {
-    modelChipNode.textContent = "模型状态：边界控制中";
+    modelChipNode.textContent = `模型状态：${activeModelName}（边界控制中）`;
     modelChipNode.classList.add("risk");
   } else {
-    modelChipNode.textContent = "模型状态：online";
+    modelChipNode.textContent = `模型状态：${activeModelName}（online）`;
     modelChipNode.classList.remove("risk");
   }
 }
@@ -270,7 +107,7 @@ function appendMessage(role, content, meta = "") {
   const node = document.createElement("div");
   node.className = `chat-message ${role}`;
 
-  const roleText = role === "user" ? "用户" : "数字医生";
+  const roleText = role === "user" ? "用户" : "智能助手";
   node.innerHTML = `
     <div class="chat-role">${window.tcmApi.escapeHtml(roleText)}${meta ? ` · ${window.tcmApi.escapeHtml(meta)}` : ""}</div>
     <div class="chat-content">${window.tcmApi.escapeHtml(content).replace(/\n/g, "<br>")}</div>
@@ -610,7 +447,7 @@ function resetSession() {
   if (chatStream) {
     chatStream.innerHTML = `
       <div class="chat-message assistant">
-        <div class="chat-role">数字医生</div>
+        <div class="chat-role">智能助手</div>
         <div class="chat-content">会话已重置，请直接输入问题。</div>
       </div>
     `;
@@ -630,7 +467,7 @@ function resetSession() {
   currentCaseId = "";
 
   if (speechScriptNode) {
-    speechScriptNode.textContent = "提交问题后自动生成播报脚本。";
+    speechScriptNode.textContent = "提交问题后自动生成回答摘要。";
   }
 
   updateTranscript({});
@@ -723,7 +560,7 @@ function bindEvents() {
 
       avatarNode?.classList.remove("calm", "serious");
       avatarNode?.classList.add(result.digital_human?.emotion === "serious" ? "serious" : "calm");
-      setModelChip(result.risk_level || "safe");
+      setModelChip(result.risk_level || "safe", result.model_name);
 
       if (autoSpeakCheckbox?.checked && lastSpeechText) {
         speak(lastSpeechText);
@@ -769,10 +606,10 @@ function bindEvents() {
   btnActionSwitchAvatar?.addEventListener("click", () => {
     altPersona = !altPersona;
     if (altPersona) {
-      if (avatarStateDesc) avatarStateDesc.textContent = "当前为专家数字人：偏临床审核语气。";
-      if (avatarStateBadge) avatarStateBadge.textContent = "专家模式";
+      if (avatarStateDesc) avatarStateDesc.textContent = "当前为专家问答风格：偏临床审核语气。";
+      if (avatarStateBadge) avatarStateBadge.textContent = "专家风格";
     } else {
-      if (avatarStateDesc) avatarStateDesc.textContent = "当前为标准数字人：偏患者沟通语气。";
+      if (avatarStateDesc) avatarStateDesc.textContent = "当前为标准问答风格：偏患者沟通语气。";
       if (avatarStateBadge) avatarStateBadge.textContent = "待机";
     }
   });

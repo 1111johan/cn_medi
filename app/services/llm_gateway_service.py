@@ -12,6 +12,7 @@ from app.core.config import (
     LLM_TIMEOUT_SECONDS,
     PRIMARY_LLM_MODEL,
     PRIMARY_LLM_PROVIDER,
+    SELF_MODEL_NAME,
 )
 
 
@@ -30,8 +31,8 @@ class LLMGatewayService:
 
         return {
             "ok": False,
-            "provider": provider or "unknown",
-            "model": PRIMARY_LLM_MODEL,
+            "provider": "self",
+            "model": SELF_MODEL_NAME,
             "content": "",
             "error": f"unsupported_provider:{provider or 'unknown'}",
         }
@@ -45,10 +46,10 @@ class LLMGatewayService:
         if not DEEPSEEK_API_KEY:
             return {
                 "ok": False,
-                "provider": "deepseek",
-                "model": DEEPSEEK_CHAT_MODEL,
+                "provider": "self",
+                "model": SELF_MODEL_NAME,
                 "content": "",
-                "error": "deepseek_key_missing",
+                "error": "service_key_missing",
             }
 
         model = (PRIMARY_LLM_MODEL or "").strip()
@@ -86,8 +87,8 @@ class LLMGatewayService:
             if not content:
                 return {
                     "ok": False,
-                    "provider": "deepseek",
-                    "model": model,
+                    "provider": "self",
+                    "model": SELF_MODEL_NAME,
                     "content": "",
                     "error": "empty_content",
                     "raw": parsed,
@@ -95,8 +96,8 @@ class LLMGatewayService:
 
             return {
                 "ok": True,
-                "provider": "deepseek",
-                "model": model,
+                "provider": "self",
+                "model": SELF_MODEL_NAME,
                 "content": str(content).strip(),
                 "raw": parsed,
             }
@@ -104,28 +105,28 @@ class LLMGatewayService:
             detail = exc.read().decode("utf-8", errors="ignore")
             return {
                 "ok": False,
-                "provider": "deepseek",
-                "model": model,
+                "provider": "self",
+                "model": SELF_MODEL_NAME,
                 "content": "",
-                "error": f"http_{exc.code}",
+                "error": f"service_http_{exc.code}",
                 "detail": detail[:600],
             }
         except URLError as exc:
             return {
                 "ok": False,
-                "provider": "deepseek",
-                "model": model,
+                "provider": "self",
+                "model": SELF_MODEL_NAME,
                 "content": "",
-                "error": "url_error",
+                "error": "service_network_error",
                 "detail": str(exc),
             }
         except Exception as exc:  # noqa: BLE001
             return {
                 "ok": False,
-                "provider": "deepseek",
-                "model": model,
+                "provider": "self",
+                "model": SELF_MODEL_NAME,
                 "content": "",
-                "error": "unexpected_error",
+                "error": "service_unexpected_error",
                 "detail": str(exc),
             }
 

@@ -143,6 +143,7 @@ class SmartQARequest(BaseModel):
 
 class SmartQAResponse(BaseModel):
     answer: str
+    model_name: str = ""
     speech_text: str
     risk_level: str
     boundary_notice: str

@@ -1,33 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.core.config import (
-    DIGITAL_HUMAN_MODEL_DIR,
-    DIGITAL_HUMAN_MODEL_FILE,
-    DIGITAL_HUMAN_TEX_DIFFUSE,
-    DIGITAL_HUMAN_TEX_METALLIC,
-    DIGITAL_HUMAN_TEX_NORMAL,
-    DIGITAL_HUMAN_TEX_ROUGHNESS,
-)
 from app.services.overview_service import overview_service
 
 router = APIRouter(include_in_schema=False)
 
 
 templates = Jinja2Templates(directory="app/web/templates")
-
-
-def _resolve_digital_human_asset(asset_name: str) -> Path:
-    base_dir = DIGITAL_HUMAN_MODEL_DIR.resolve()
-    target = (base_dir / asset_name).resolve()
-    if target.parent != base_dir or not target.is_file():
-        raise HTTPException(status_code=404, detail="数字人资产不存在")
-    return target
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -44,6 +26,11 @@ def platform_home(request: Request) -> HTMLResponse:
     )
 
 
+@router.get("/index.html", response_class=HTMLResponse)
+def platform_home_html(request: Request) -> HTMLResponse:
+    return platform_home(request)
+
+
 @router.get("/workbench/clinical", response_class=HTMLResponse)
 def clinical_workbench(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -58,6 +45,11 @@ def clinical_workbench(request: Request) -> HTMLResponse:
 
 @router.get("/clinical", response_class=HTMLResponse)
 def clinical_workbench_alias(request: Request) -> HTMLResponse:
+    return clinical_workbench(request)
+
+
+@router.get("/clinical.html", response_class=HTMLResponse)
+def clinical_workbench_html(request: Request) -> HTMLResponse:
     return clinical_workbench(request)
 
 
@@ -78,9 +70,13 @@ def research_workbench_alias(request: Request) -> HTMLResponse:
     return research_workbench(request)
 
 
+@router.get("/research.html", response_class=HTMLResponse)
+def research_workbench_html(request: Request) -> HTMLResponse:
+    return research_workbench(request)
+
+
 @router.get("/workbench/smart-qa", response_class=HTMLResponse)
 def smart_qa_workbench(request: Request) -> HTMLResponse:
-    model_ready = (DIGITAL_HUMAN_MODEL_DIR / DIGITAL_HUMAN_MODEL_FILE).is_file()
     return templates.TemplateResponse(
         request,
         "smart_qa.html",
@@ -88,15 +84,6 @@ def smart_qa_workbench(request: Request) -> HTMLResponse:
             "title": "智慧问答助手",
             "active": "smart_qa",
             "page_class": "page-smart-qa",
-            "digital_human_assets": {
-                "base_url": "/assets/digital-human",
-                "model_file": DIGITAL_HUMAN_MODEL_FILE,
-                "tex_diffuse": DIGITAL_HUMAN_TEX_DIFFUSE,
-                "tex_normal": DIGITAL_HUMAN_TEX_NORMAL,
-                "tex_roughness": DIGITAL_HUMAN_TEX_ROUGHNESS,
-                "tex_metallic": DIGITAL_HUMAN_TEX_METALLIC,
-                "ready": model_ready,
-            },
         },
     )
 
@@ -111,10 +98,9 @@ def smart_qa_workbench_alias_2(request: Request) -> HTMLResponse:
     return smart_qa_workbench(request)
 
 
-@router.get("/assets/digital-human/{asset_name}", include_in_schema=False)
-def digital_human_asset(asset_name: str) -> FileResponse:
-    target = _resolve_digital_human_asset(asset_name)
-    return FileResponse(path=target)
+@router.get("/smart-qa.html", response_class=HTMLResponse)
+def smart_qa_workbench_html(request: Request) -> HTMLResponse:
+    return smart_qa_workbench(request)
 
 
 @router.get("/workbench/rnd", response_class=HTMLResponse)
@@ -131,6 +117,11 @@ def rnd_workbench(request: Request) -> HTMLResponse:
 
 @router.get("/rnd", response_class=HTMLResponse)
 def rnd_workbench_alias(request: Request) -> HTMLResponse:
+    return rnd_workbench(request)
+
+
+@router.get("/rnd.html", response_class=HTMLResponse)
+def rnd_workbench_html(request: Request) -> HTMLResponse:
     return rnd_workbench(request)
 
 
@@ -163,6 +154,11 @@ def knowledge_center_alias(request: Request) -> HTMLResponse:
     return knowledge_center(request)
 
 
+@router.get("/knowledge-center.html", response_class=HTMLResponse)
+def knowledge_center_html(request: Request) -> HTMLResponse:
+    return knowledge_center(request)
+
+
 @router.get("/middle/reasoning", response_class=HTMLResponse)
 def reasoning_center(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -177,6 +173,11 @@ def reasoning_center(request: Request) -> HTMLResponse:
 
 @router.get("/reasoning", response_class=HTMLResponse)
 def reasoning_center_alias(request: Request) -> HTMLResponse:
+    return reasoning_center(request)
+
+
+@router.get("/reasoning-center.html", response_class=HTMLResponse)
+def reasoning_center_html(request: Request) -> HTMLResponse:
     return reasoning_center(request)
 
 
@@ -197,6 +198,11 @@ def expert_review_center_alias(request: Request) -> HTMLResponse:
     return expert_review_center(request)
 
 
+@router.get("/expert-review.html", response_class=HTMLResponse)
+def expert_review_center_html(request: Request) -> HTMLResponse:
+    return expert_review_center(request)
+
+
 @router.get("/governance/operations", response_class=HTMLResponse)
 def operations_console(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -211,4 +217,9 @@ def operations_console(request: Request) -> HTMLResponse:
 
 @router.get("/operations", response_class=HTMLResponse)
 def operations_console_alias(request: Request) -> HTMLResponse:
+    return operations_console(request)
+
+
+@router.get("/operations.html", response_class=HTMLResponse)
+def operations_console_html(request: Request) -> HTMLResponse:
     return operations_console(request)

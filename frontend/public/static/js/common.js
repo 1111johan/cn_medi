@@ -25,7 +25,18 @@ function badgeClassByStatus(status) {
 
 function resolveApiUrl(url) {
   const rawBase = String(window.__TCM_API_BASE__ || "").trim();
-  if (!rawBase || /^https?:\/\//i.test(String(url))) {
+  if (/^https?:\/\//i.test(String(url))) {
+    return url;
+  }
+
+  // Dev fallback: when page is served by Vite (127.0.0.1:5173) and no explicit API base is set,
+  // call backend API directly to avoid 404 on Vite static routes.
+  if (!rawBase && /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) && window.location.port === "5173") {
+    const suffix = String(url).startsWith("/") ? String(url) : `/${String(url)}`;
+    return `http://127.0.0.1:8000${suffix}`;
+  }
+
+  if (!rawBase) {
     return url;
   }
 
@@ -35,13 +46,26 @@ function resolveApiUrl(url) {
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(resolveApiUrl(url), {
+  const finalUrl = resolveApiUrl(url);
+  const response = await fetch(finalUrl, {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
     ...options,
   });
+
+  if (response.status === 204) {
+    return {};
+  }
+
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) {
+    const preview = (await response.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 120);
+    throw new Error(
+      `API返回非JSON响应(${response.status})${preview ? `: ${preview}` : ""}，请求地址=${finalUrl}`
+    );
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -97,6 +121,30 @@ function ensureGlobalSearchPanel() {
   return panel;
 }
 
+function toFrontendRoute(route) {
+  const routeMap = {
+    "/": "/index.html",
+    "/workbench/clinical": "/clinical.html",
+    "/clinical": "/clinical.html",
+    "/workbench/research": "/research.html",
+    "/research": "/research.html",
+    "/workbench/smart-qa": "/smart-qa.html",
+    "/smart-qa": "/smart-qa.html",
+    "/qa-assistant": "/smart-qa.html",
+    "/workbench/rnd": "/rnd.html",
+    "/rnd": "/rnd.html",
+    "/middle/knowledge": "/knowledge-center.html",
+    "/knowledge": "/knowledge-center.html",
+    "/middle/reasoning": "/reasoning-center.html",
+    "/reasoning": "/reasoning-center.html",
+    "/review/expert": "/expert-review.html",
+    "/expert-review": "/expert-review.html",
+    "/governance/operations": "/operations.html",
+    "/operations": "/operations.html",
+  };
+  return routeMap[String(route || "").trim()] || route || "#";
+}
+
 function renderGlobalSearchResult(panel, payload) {
   const results = payload.results || [];
   if (!results.length) {
@@ -108,7 +156,7 @@ function renderGlobalSearchResult(panel, payload) {
   panel.innerHTML = results
     .map(
       (item) => `
-      <a class="search-item" href="${escapeHtml(item.route || "#")}">
+      <a class="search-item" href="${escapeHtml(toFrontendRoute(item.route))}">
         <div class="search-item-head">
           <span class="search-title">${escapeHtml(item.title || "")}</span>
           <span class="search-category">${escapeHtml(item.category || "")}</span>

@@ -42,6 +42,10 @@ def _resolve_data_dir() -> Path:
 
 DATA_DIR = _resolve_data_dir()
 
+SYSTEM_NAME = os.getenv("TCM_SYSTEM_NAME", "岐衡中医智能体平台")
+SYSTEM_KICKER = os.getenv("TCM_SYSTEM_KICKER", "QIHENG TCM AI PLATFORM")
+SELF_MODEL_NAME = os.getenv("TCM_SELF_MODEL_NAME", "岐衡·太乙中医大模型")
+
 # 默认读取项目外层目录下的“中医药”数据库，可用 TCM_PRO_DATA_DIR 覆盖。
 PROFESSIONAL_DATA_DIR = Path(
     os.getenv("TCM_PRO_DATA_DIR", str(BASE_DIR.parent / "中医药"))

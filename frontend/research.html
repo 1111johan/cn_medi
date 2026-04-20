@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>科研传承工作台 - 岐衡中医智能体平台</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="ambient-shape shape-a"></div>
+  <div class="ambient-shape shape-b"></div>
+
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-wrap">
+        <p class="brand-kicker">QIHENG TCM AI PLATFORM</p>
+        <h1 class="brand-title">岐衡中医智能体平台</h1>
+        <p class="brand-subtitle">统一中台能力支撑临床辅助、科研传承、中药研发三类场景</p>
+      </div>
+
+      <div class="topbar-tools">
+        <label class="global-search-wrap">
+          <input id="global-search" type="text" placeholder="全局搜索：证候 / 方剂 / 医案 / 问答 / 规则 / 审计">
+        </label>
+        <div class="status-chip-group" id="global-status">
+          <span class="status-chip">模型版本：MVP-0.2</span>
+          <span class="status-chip">机构：示例机构</span>
+          <span class="status-chip">角色：平台管理员</span>
+          <span class="status-chip" id="api-health-chip">API: checking</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/index.html" class="">平台总览</a>
+      <a href="/clinical.html" class="">临床辅助</a>
+      <a href="/research.html" class="active">科研传承</a>
+      <a href="/smart-qa.html" class="">智慧问答</a>
+      <a href="/rnd.html" class="">中药研发</a>
+      <a href="/knowledge-center.html" class="">知识中台</a>
+      <a href="/reasoning-center.html" class="">推理中台</a>
+      <a href="/expert-review.html" class="">专家审核</a>
+      <a href="/operations.html" class="">运营治理</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero card">
+  <div>
+    <p class="section-kicker">Research & Inheritance</p>
+    <h2 class="hero-title">科研传承工作台</h2>
+    <p class="hero-text">围绕“问题-证据-出处-关联关系”构建可追溯问答，支持教学案例沉淀与研究摘要生成。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>证据回链</span><strong>ON</strong></div>
+    <div class="mini-stat"><span>专业库接入</span><strong>ON</strong></div>
+    <div class="mini-stat"><span>可追溯回答</span><strong>≥90%</strong></div>
+  </div>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>统一检索问答</h3>
+    <form id="qa-form" class="form-grid">
+      <label class="full">
+        研究问题
+        <textarea name="question" rows="4" required placeholder="示例：痰湿瘀阻证的核心病机、治法与方药依据是什么？"></textarea>
+      </label>
+      <label>
+        研究范围
+        <input type="text" name="scope" value="中医医案">
+      </label>
+      <label>
+        来源类型（可空）
+        <input type="text" name="source_types" placeholder="classic,formula,paper">
+      </label>
+      <button type="submit" class="btn">执行证据检索</button>
+    </form>
+
+    <div class="result-box" id="qa-answer">等待科研问答执行。</div>
+  </article>
+
+  <article class="card">
+    <h3>证据链面板</h3>
+    <div id="evidence-list" class="evidence-list"></div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>古今术语映射</h3>
+    <div id="term-map-list" class="stack-list">
+      <div class="result-box">执行问答后自动生成术语映射。</div>
+    </div>
+  </article>
+
+  <article class="card">
+    <h3>关系图谱摘要</h3>
+    <div id="relation-graph-list" class="stack-list">
+      <div class="result-box">执行问答后自动生成“证候-治法-方药-证据”关系摘要。</div>
+    </div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>研究摘要草稿</h3>
+    <form id="summary-form" class="form-grid">
+      <label>
+        研究问题
+        <input type="text" name="question" value="痰湿瘀阻证与现代研究映射">
+      </label>
+      <label>
+        证候
+        <input type="text" name="syndrome" value="痰湿瘀阻">
+      </label>
+      <label class="full">
+        主要证据
+        <textarea name="evidence" rows="3" placeholder="输入关键证据与出处"></textarea>
+      </label>
+      <button type="submit" class="btn">生成研究摘要</button>
+    </form>
+    <pre class="result" id="summary-result"></pre>
+  </article>
+
+  <article class="card">
+    <h3>教学/课题案例沉淀</h3>
+    <form id="research-ingest-form" class="form-grid">
+      <label>
+        案例标题
+        <input type="text" name="title" value="科研案例：痰湿瘀阻证证据链示例">
+      </label>
+      <label>
+        标签（逗号分隔）
+        <input type="text" name="tags" value="科研, 证据链, 教学案例">
+      </label>
+      <label class="full">
+        案例内容
+        <textarea name="content" rows="6" placeholder="可粘贴问答结果与证据摘要"></textarea>
+      </label>
+      <button type="submit" class="btn secondary">沉淀到知识中台</button>
+    </form>
+    <pre class="result" id="research-ingest-result"></pre>
+  </article>
+</section>
+  </main>
+
+  <footer class="footer">岐衡中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/research.js"></script>
+</body>
+</html>

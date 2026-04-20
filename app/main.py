@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.document import router as document_router
@@ -21,6 +22,21 @@ app = FastAPI(
     title="中医智能体平台 MVP",
     description="平台化 MVP：知识中台 + 推理中台 + 临床/科研/研发工作台 + 治理闭环",
     version="0.1.0",
+)
+
+# Allow local frontend hosts (Vite/dev tools) to call backend APIs.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:4173",
+        "http://localhost:4173",
+    ],
+    allow_origin_regex=r"https?://(127\.0\.0\.1|localhost)(:\d+)?$",
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.mount("/static", StaticFiles(directory="app/web/static"), name="static")

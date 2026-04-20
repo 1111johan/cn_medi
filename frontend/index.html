@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智慧问答助手 - 中医智能体平台 MVP</title>
+  <title>平台首页 - 岐衡中医智能体平台</title>
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
@@ -13,8 +13,8 @@
   <header class="topbar">
     <div class="topbar-main">
       <div class="brand-wrap">
-        <p class="brand-kicker">TCM Agent Platform</p>
-        <h1 class="brand-title">中医智能体平台 MVP</h1>
+        <p class="brand-kicker">QIHENG TCM AI PLATFORM</p>
+        <h1 class="brand-title">岐衡中医智能体平台</h1>
         <p class="brand-subtitle">统一中台能力支撑临床辅助、科研传承、中药研发三类场景</p>
       </div>
 
@@ -32,189 +32,185 @@
     </div>
 
     <nav class="nav">
-      <a href="#">平台总览</a>
-      <a href="#">临床辅助</a>
-      <a href="#">科研传承</a>
-      <a href="#" class="active">智慧问答</a>
-      <a href="#">中药研发</a>
-      <a href="#">知识中台</a>
-      <a href="#">推理中台</a>
-      <a href="#">专家审核</a>
-      <a href="#">运营治理</a>
+      <a href="/index.html" class="active">平台总览</a>
+      <a href="/clinical.html" class="">临床辅助</a>
+      <a href="/research.html" class="">科研传承</a>
+      <a href="/smart-qa.html" class="">智慧问答</a>
+      <a href="/rnd.html" class="">中药研发</a>
+      <a href="/knowledge-center.html" class="">知识中台</a>
+      <a href="/reasoning-center.html" class="">推理中台</a>
+      <a href="/expert-review.html" class="">专家审核</a>
+      <a href="/operations.html" class="">运营治理</a>
     </nav>
   </header>
 
-  <main class="container page-smart-qa">
-    <section class="qa-master">
-      <header class="qa-header card">
-        <div class="qa-header-left">
-          <div class="qa-mark">医脉相承 AI</div>
-          <div class="qa-submark">数字人智能问答中枢</div>
-        </div>
+  <main class="container">
+    <section class="hero card">
+  <div>
+    <p class="section-kicker">Platform Strategy</p>
+    <h2 class="hero-title">平台版 MVP 运行看板</h2>
+    <p class="hero-text">按照《中医智能体平台MVP方案》对齐“中台能力 + 三场景闭环 + 治理留痕”，展示当前落地进度与风险点。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat">
+      <span>临床闭环数</span>
+      <strong id="metric-clinical-loop">0</strong>
+    </div>
+    <div class="mini-stat">
+      <span>证据可追溯率</span>
+      <strong id="metric-trace">0%</strong>
+    </div>
+    <div class="mini-stat">
+      <span>医生采纳率</span>
+      <strong id="metric-adoption">0%</strong>
+    </div>
+  </div>
+</section>
 
-        <div class="qa-mode-segment" id="qa-mode-segment">
-          <button type="button" class="mode-pill active" data-mode="text">问诊模式</button>
-          <button type="button" class="mode-pill" data-mode="mixed">知识问答</button>
-          <button type="button" class="mode-pill" data-mode="document">方药解析</button>
-          <button type="button" class="mode-pill" data-mode="research">科研检索</button>
-        </div>
+<section class="kpi-grid">
+  <article class="kpi-card">
+    <p class="kpi-label">知识对象</p>
+    <p class="kpi-value" id="metric-knowledge">0</p>
+    <p class="kpi-note">本地知识中台对象</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">专业库记录</p>
+    <p class="kpi-value" id="metric-professional">0</p>
+    <p class="kpi-note">古籍/医案解析索引</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">反馈记录</p>
+    <p class="kpi-value" id="metric-feedback">0</p>
+    <p class="kpi-note">采纳/修改/拒绝回流</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">审计事件</p>
+    <p class="kpi-value" id="metric-audit">0</p>
+    <p class="kpi-note">关键动作全链留痕</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">临床事件</p>
+    <p class="kpi-value" id="metric-clinical-events">0</p>
+    <p class="kpi-note">四诊-辨证-草案-反馈</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">科研事件</p>
+    <p class="kpi-value" id="metric-research-events">0</p>
+    <p class="kpi-note">问答与证据链查询</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">研发事件</p>
+    <p class="kpi-value" id="metric-rnd-events">0</p>
+    <p class="kpi-note">感知分析与关系检索</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">问答咨询量</p>
+    <p class="kpi-value" id="metric-smart-qa-events">0</p>
+    <p class="kpi-note">数字人咨询调用</p>
+  </article>
+</section>
 
-        <div class="qa-header-right">
-          <button type="button" class="mini-icon-btn" id="qa-history-btn">历史会话</button>
-          <button type="button" class="mini-icon-btn" id="qa-notice-btn">通知</button>
-          <div class="qa-model-chip" id="qa-model-chip">模型状态：online</div>
-        </div>
-      </header>
+<section class="grid cards-3">
+  <article class="card scene-entry">
+    <h3>临床智能工作站</h3>
+    <p>围绕门诊队列、四诊证据、证候排序、方药草案、文书协作、反馈回流形成临床闭环。</p>
+    <a href="/clinical.html">进入临床场景 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>科研与古籍研究台</h3>
+    <p>支持问题检索、证据回链、术语映射、案例沉淀、研究摘要导出，确保回答可引用可验证。</p>
+    <a href="/research.html">进入科研场景 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>智慧问答数字人</h3>
+    <p>支持语音/图片/文档咨询，自动识别场景并给出分步骤就医建议；高风险问题自动触发边界提示。</p>
+    <a href="/smart-qa.html">进入智慧问答 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>中药研发工具链</h3>
+    <p>联动药材、组方、证候、现代研究证据，支持关系检索、风险提示与研发记录回写。</p>
+    <a href="/rnd.html">进入研发场景 →</a>
+  </article>
+</section>
 
-      <section class="qa-layout">
-        <aside class="qa-pane-left card">
-          <div class="avatar-stage" id="avatar-stage">
-            <div class="stage-bg-grid"></div>
-            <div class="stage-particles"></div>
+<section class="grid cards-2">
+  <article class="card">
+    <h3>能力覆盖矩阵</h3>
+    <div id="architecture-list" class="stack-list"></div>
+  </article>
 
-            <div
-              id="dh-avatar"
-              class="dh-avatar calm"
-              data-model-base="/assets/digital-human"
-              data-model-file="base.obj"
-              data-tex-diffuse="texture_diffuse.png"
-              data-tex-normal="texture_normal.png"
-              data-tex-roughness="texture_roughness.png"
-              data-tex-metallic="texture_metallic.png"
-              data-model-ready="false"
-            >
-              <canvas id="dh-model-canvas" class="dh-model-canvas" aria-label="数字人三维模型"></canvas>
-              <div id="dh-avatar-fallback" class="dh-avatar-fallback">
-                <div class="fallback-face"></div>
-                <div class="fallback-tip">数字人模型加载中</div>
-              </div>
-            </div>
+  <article class="card">
+    <h3>四闭环健康度</h3>
+    <div id="loop-list" class="stack-list"></div>
+  </article>
+</section>
 
-            <div class="dh-state-badge" id="dh-state-badge">待机</div>
-          </div>
+<section class="grid cards-2">
+  <article class="card">
+    <h3>90 天路线图</h3>
+    <div id="roadmap-list" class="roadmap-list"></div>
+  </article>
 
-          <section class="avatar-state-card" id="avatar-state-card">
-            <div class="state-title">数字人状态</div>
-            <div class="state-main" id="avatar-state-main">待机中，随时可咨询</div>
-            <div class="state-desc" id="avatar-state-desc">请输入问题，或点击“开始语音问诊”。</div>
-          </section>
+  <article class="card">
+    <h3>今日任务队列</h3>
+    <div id="task-queue" class="task-list"></div>
+  </article>
+</section>
 
-          <section class="transcript-card">
-            <div class="state-title">实时语音转写</div>
-            <div class="transcript-content" id="qa-transcript">暂无语音输入</div>
-            <div class="transcript-tags" id="qa-transcript-tags"></div>
-          </section>
+<section class="grid cards-2">
+  <article class="card">
+    <h3>知识源分布</h3>
+    <div id="source-breakdown" class="stack-list"></div>
 
-          <section class="quick-action-card">
-            <div class="state-title">快捷能力</div>
-            <div class="quick-action-grid">
-              <button type="button" class="quick-btn" id="action-voice">开始语音问诊</button>
-              <button type="button" class="quick-btn" id="action-upload-tongue">上传舌照</button>
-              <button type="button" class="quick-btn" id="action-upload-record">上传病历/处方</button>
-              <button type="button" class="quick-btn" id="action-switch-avatar">切换专家数字人</button>
-              <button type="button" class="quick-btn" id="action-play">播放讲解</button>
-              <button type="button" class="quick-btn" id="action-stop">停止播报</button>
-            </div>
-          </section>
-        </aside>
+    <h3 class="top-gap">最近审计</h3>
+    <div id="recent-audits" class="audit-mini-list"></div>
+  </article>
 
-        <section class="qa-pane-center card">
-          <header class="conversation-header">
-            <div>
-              <h3 id="conversation-title">初诊问答会话</h3>
-              <div class="conversation-tags" id="conversation-tags">
-                <span class="tag-chip">中医问诊</span>
-                <span class="tag-chip">数字人协同</span>
-                <span class="tag-chip">多模态分析中</span>
-              </div>
-            </div>
-            <div class="conversation-actions">
-              <button type="button" class="mini-icon-btn">收藏</button>
-              <button type="button" class="mini-icon-btn">导出</button>
-              <button type="button" class="mini-icon-btn" id="new-session-btn">新建会话</button>
-            </div>
-          </header>
+  <article class="card">
+    <h3>关键趋势</h3>
+    <div class="trend-strip" id="trend-strip"></div>
 
-          <section class="chat-stream" id="qa-chat-stream">
-            <div class="chat-message assistant">
-              <div class="chat-role">数字医生</div>
-              <div class="chat-content">欢迎使用智慧问答，请直接输入问题。</div>
-            </div>
-          </section>
+    <h3 class="top-gap">待审核任务</h3>
+    <div id="pending-review-list" class="audit-mini-list"></div>
+  </article>
+</section>
 
-          <form id="qa-form" class="input-dock">
-            <div class="input-main-row compact-row">
-              <textarea id="qa-question" name="question" rows="3" placeholder="请输入症状、病史、舌象、脉象或您想问的问题……" required></textarea>
-
-              <div class="input-right-tools inline-tools">
-                <button type="button" class="tool-btn" id="tool-image">图片上传</button>
-                <button type="button" class="tool-btn" id="tool-file">文件上传</button>
-                <button type="button" class="tool-btn" id="tool-mic">语音</button>
-                <button type="submit" class="btn">发送</button>
-              </div>
-            </div>
-
-            <div hidden>
-              <select name="mode" id="qa-mode" class="sub-select">
-                <option value="text">text</option>
-                <option value="voice">voice</option>
-                <option value="image">image</option>
-                <option value="document">document</option>
-                <option value="mixed">mixed</option>
-                <option value="research">research</option>
-              </select>
-              <select name="scenario" id="qa-scenario-select" class="sub-select">
-                <option value="">自动识别场景</option>
-              </select>
-              <input id="qa-attachment-hint" type="text" class="sub-text">
-              <input type="checkbox" id="qa-auto-speak" checked>
-              <button type="button" id="qa-clear"></button>
-              <input id="qa-files" type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="sub-file-input">
-            </div>
-          </form>
-        </section>
-
-        <aside class="qa-pane-right card">
-          <div class="result-tabs" id="result-tabs">
-            <button type="button" class="tab-btn active" data-tab="results">结果</button>
-            <button type="button" class="tab-btn" data-tab="evidence">依据</button>
-            <button type="button" class="tab-btn" data-tab="graph">图谱</button>
-            <button type="button" class="tab-btn" data-tab="tasks">任务</button>
-          </div>
-
-          <section class="tab-panel active" data-panel="results">
-            <div class="panel-list" id="panel-results"></div>
-          </section>
-
-          <section class="tab-panel" data-panel="evidence">
-            <div class="panel-list" id="panel-evidence"></div>
-          </section>
-
-          <section class="tab-panel" data-panel="graph">
-            <div class="panel-list" id="panel-graph"></div>
-          </section>
-
-          <section class="tab-panel" data-panel="tasks">
-            <div class="panel-list" id="panel-tasks"></div>
-          </section>
-
-          <section class="speech-script-card">
-            <div class="state-title">数字人播报脚本</div>
-            <div id="qa-speech-script" class="script-text">提交问题后自动生成播报脚本。</div>
-          </section>
-
-          <section class="upload-preview-card">
-            <div class="state-title">已选材料</div>
-            <div id="qa-upload-list" class="upload-list">
-              <div class="result-box">尚未选择文件。</div>
-            </div>
-          </section>
-        </aside>
-      </section>
-    </section>
+<section class="grid cards-2">
+  <article class="card">
+    <h3>快速知识入库</h3>
+    <form id="ingest-form" class="form-grid">
+      <label>
+        来源类型
+        <select name="source_type">
+          <option value="classic">classic</option>
+          <option value="guideline">guideline</option>
+          <option value="case">case</option>
+          <option value="formula">formula</option>
+          <option value="herb">herb</option>
+          <option value="paper">paper</option>
+        </select>
+      </label>
+      <label>
+        标题
+        <input type="text" name="title" required placeholder="如：脾虚痰瘀门诊经验总结">
+      </label>
+      <label class="full">
+        内容
+        <textarea name="content" rows="4" required placeholder="输入古籍段落、临床经验或研究摘要"></textarea>
+      </label>
+      <label class="full">
+        标签（逗号分隔）
+        <input type="text" name="tags" placeholder="脾虚, 痰瘀, 方剂">
+      </label>
+      <button type="submit" class="btn">写入知识中台</button>
+    </form>
+    <pre class="result" id="ingest-result"></pre>
+  </article>
+</section>
   </main>
 
-  <footer class="footer">中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
-  <script type="module" src="/src/bootstrap.js"></script>
+  <footer class="footer">岐衡中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/home.js"></script>
 </body>
 </html>

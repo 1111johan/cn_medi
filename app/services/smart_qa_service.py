@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
-from app.core.config import PRIMARY_LLM_MODEL, PRIMARY_LLM_PROVIDER, SYNDROME_RULES
+from app.core.config import SELF_MODEL_NAME, SYNDROME_RULES
 from app.services.knowledge_service import knowledge_service
 from app.services.llm_gateway_service import llm_gateway_service
 from app.services.professional_knowledge_service import professional_knowledge_service
@@ -23,7 +23,43 @@ BOUNDARY_KEYWORDS = {
     "按这个吃药",
 }
 
-OUT_OF_SCOPE_TERMS = {"肺结核", "结核", "密接", "痰检", "核酸", "病原学"}
+OUT_OF_SCOPE_TERMS = {"股票", "币圈", "彩票", "代码报错", "旅游签证", "合同纠纷"}
+
+GENERAL_GUIDE_TERMS = {
+    "如何",
+    "怎么",
+    "怎样",
+    "是什么",
+    "原理",
+    "流程",
+    "步骤",
+    "方法",
+    "思路",
+    "基础",
+    "入门",
+    "判断",
+    "辨别",
+    "区分",
+}
+
+PATIENT_CASE_HINT_TERMS = {
+    "我",
+    "本人",
+    "最近",
+    "这几天",
+    "一直",
+    "已经",
+    "出现",
+    "伴有",
+    "加重",
+    "缓解",
+    "主诉",
+    "病史",
+    "复诊",
+    "检查",
+    "化验",
+    "结果",
+}
 
 FAQ_LIBRARY = [
     {
@@ -286,28 +322,38 @@ class SmartQAService:
         clean_question = self._normalize(question)
         attachments = attachments or []
 
+        extracted_fields = self._extract_fields(clean_question, attachments)
+        is_general_question = self._is_general_question(clean_question, extracted_fields)
+
         resolved_scenario = self._resolve_scenario(scenario=scenario, question=clean_question, mode=mode)
+        if is_general_question and not scenario:
+            resolved_scenario = "科研传承"
+
         scenario_cfg = SCENARIO_GUIDES.get(resolved_scenario, {})
         steps = scenario_cfg.get("steps", DEFAULT_STEPS)
         route = scenario_cfg.get("route", ["临床智能工作站", "专家复核中心"])
         suggested_questions = scenario_cfg.get("prompts", DEFAULT_PROMPTS)
 
-        extracted_fields = self._extract_fields(clean_question, attachments)
-        missing_items = extracted_fields.get("missing_items", [])
-        syndrome_candidates = self._infer_syndrome_candidates(extracted_fields, resolved_scenario)
+        missing_items = [] if is_general_question else extracted_fields.get("missing_items", [])
+        syndrome_candidates = [] if is_general_question else self._infer_syndrome_candidates(extracted_fields, resolved_scenario)
 
-        top_candidate = syndrome_candidates[0] if syndrome_candidates else {"name": "待进一步辨证", "score": 0.0}
+        top_candidate = syndrome_candidates[0] if syndrome_candidates else {"name": "待结合四诊信息", "score": 0.0}
         top_syndrome = top_candidate["name"]
 
         strategy = SYNDROME_PROFILES.get(top_syndrome, {})
         therapy = strategy.get("therapy", "建议补齐四诊信息后再确定治法")
         formula = strategy.get("formula", "待补齐资料后生成")
+        if is_general_question:
+            therapy = "当前为通识问答场景，需结合个体四诊信息后再进入证候治法判断。"
+            formula = "通识问答不直接生成方药草案。"
 
         local_hits = knowledge_service.search(query=clean_question, top_k=4)
-        professional_hits = professional_knowledge_service.search(query=clean_question, top_k=4)
+        professional_hits = [] if is_general_question else professional_knowledge_service.search(query=clean_question, top_k=4)
         evidences = self._filter_out_of_scope_evidences(self._merge_evidences(local_hits, professional_hits))
+        if is_general_question:
+            evidences = []
 
-        faq_answer = self._match_faq(clean_question)
+        faq_answer = self._match_faq(clean_question) if is_general_question else ""
         attachment_note = self._attachment_note(attachments)
         boundary = self._boundary_notice(clean_question)
         topic_guarded = self._contains_out_of_scope_topic(clean_question)
@@ -318,14 +364,17 @@ class SmartQAService:
             f"结合当前输入信息，系统优先考虑证候为“{top_syndrome}”（置信度 {top_candidate.get('score', 0):.2f}），"
             f"建议治法为“{therapy}”，方药可参考“{formula}”。"
         )
-        llm_result: Dict[str, Any] = {"ok": False, "provider": "none", "model": "none", "error": "not_called"}
+        llm_result: Dict[str, Any] = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "not_called"}
 
         if topic_guarded:
             answer = "当前平台仅提供通用中医辨证、方药与科研问答，请改用症状、舌象、脉象、体质或方药问题继续咨询。"
-            llm_result = {"ok": False, "provider": "none", "model": "none", "error": "topic_guard"}
+            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "topic_guard"}
         elif faq_answer:
             answer = faq_answer
-            llm_result = {"ok": False, "provider": "none", "model": "none", "error": "faq_hit"}
+            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "faq_hit"}
+        elif is_general_question:
+            answer = self._build_general_answer(clean_question)
+            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "general_guide"}
         else:
             llm_result = self._generate_llm_answer(
                 question=clean_question,
@@ -343,7 +392,7 @@ class SmartQAService:
         concise_notes: List[str] = []
         if boundary["is_boundary"]:
             concise_notes.append("提示：当前问题涉及诊疗边界，请线下就医并由医生最终确认。")
-        if missing_items:
+        if missing_items and not is_general_question:
             concise_notes.append("需补充信息：" + "、".join(missing_items[:4]))
         if attachment_note:
             concise_notes.append("已接收上传材料。")
@@ -351,19 +400,28 @@ class SmartQAService:
         if concise_notes:
             answer = answer.strip() + "\n\n" + "\n".join(concise_notes)
 
+        citation_block = self._build_citation_block(evidences) if not is_general_question else ""
+        if citation_block:
+            answer = answer.strip() + "\n\n" + citation_block
+
         speech_text = self._build_speech_text(answer)
 
         process_cards = self._build_process_cards(
             mode=mode,
             attachments=attachments,
             evidence_count=len(evidences),
+            citation_count=min(len(evidences), 3),
             top_syndrome=top_syndrome,
             boundary=boundary,
             missing_items=missing_items,
             llm_result=llm_result,
         )
-        graph_links = self._build_graph_links(extracted_fields, syndrome_candidates, therapy, formula)
-        workflow_tasks = self._build_workflow_tasks(boundary, missing_items, resolved_scenario)
+        graph_links = [] if is_general_question else self._build_graph_links(extracted_fields, syndrome_candidates, therapy, formula)
+        workflow_tasks = (
+            self._build_general_tasks()
+            if is_general_question
+            else self._build_workflow_tasks(boundary, missing_items, resolved_scenario)
+        )
 
         result_cards = {
             "chief_complaint_summary": self._summarize_complaint(clean_question),
@@ -373,20 +431,24 @@ class SmartQAService:
                 "pulse": extracted_fields.get("pulse_tags", []),
             },
             "syndrome_candidates": syndrome_candidates,
-            "therapy_suggestions": [therapy],
+            "therapy_suggestions": [] if is_general_question else [therapy],
             "formula_draft": {
-                "name": formula,
-                "note": "MVP 草案，仅作学术与流程演示，需医生审核确认。",
+                "name": formula if not is_general_question else "待个体化辨证后生成",
+                "note": (
+                    "通识问答场景不输出个体化方药，需补齐主诉、舌脉与病程后再推理。"
+                    if is_general_question
+                    else "MVP 草案，仅作学术与流程演示，需医生审核确认。"
+                ),
             },
             "risk_prompts": risk_prompts,
         }
 
         session_tags = [
             resolved_scenario,
-            "数字人协同",
+            SELF_MODEL_NAME,
+            "智能问答",
             "多模态分析中" if attachments else "文本问答",
             "边界校验" if boundary["is_boundary"] else "常规科普",
-            f"LLM:{PRIMARY_LLM_PROVIDER or 'none'}",
         ]
 
         digital_state = "answering"
@@ -401,6 +463,7 @@ class SmartQAService:
             "risk_level": "caution" if boundary["is_boundary"] else "safe",
             "boundary_notice": boundary["message"],
             "scenario": resolved_scenario,
+            "model_name": SELF_MODEL_NAME,
             "steps": steps,
             "recommended_route": route,
             "evidences": evidences,
@@ -439,6 +502,42 @@ class SmartQAService:
 
         return "临床辨证"
 
+    def _is_general_question(self, question: str, extracted_fields: Dict[str, Any]) -> bool:
+        q = (question or "").strip()
+        if not q:
+            return False
+
+        structured_signal_count = int(extracted_fields.get("structured_signal_count", 0) or 0)
+        if structured_signal_count > 0:
+            return False
+
+        general_hint = any(token in q for token in GENERAL_GUIDE_TERMS)
+        case_hint = any(token in q for token in PATIENT_CASE_HINT_TERMS)
+        explicit_method_pattern = bool(re.search(r"(如何|怎么|怎样).{0,8}(判断|辨别|区分|识别)", q))
+
+        return (general_hint and not case_hint) or explicit_method_pattern
+
+    def _build_general_answer(self, question: str) -> str:
+        _ = question  # 保留参数，便于后续按问题定制模板
+        return (
+            "【初步判断】\n"
+            "您当前属于中医通识方法咨询，不是个体病例辨证。中医判断症状核心是“四诊合参”，而不是单看一个症状。\n\n"
+            "【原因说明】\n"
+            "中医会综合主诉、伴随症状、病程变化、舌象、脉象与体质信息，再做证候归类。\n"
+            "若缺少舌脉和病程信息，容易出现判断偏差。\n\n"
+            "【下一步建议】\n"
+            "1. 先记录主诉、持续时间、诱因与加重/缓解因素；\n"
+            "2. 再补充舌象（舌质/苔）与脉象；\n"
+            "3. 最后由执业中医师面诊完成辨证与治法确认。"
+        )
+
+    def _build_general_tasks(self) -> List[Dict[str, Any]]:
+        return [
+            {"title": "查看四诊采集清单", "action": "open_intake_checklist", "priority": "P1", "status": "ready"},
+            {"title": "补充主诉与病程信息", "action": "fill_missing_fields", "priority": "P1", "status": "ready"},
+            {"title": "上传舌象/病历材料", "action": "upload_materials", "priority": "P2", "status": "ready"},
+        ]
+
     def _extract_fields(self, question: str, attachments: List[Dict[str, Any]]) -> Dict[str, Any]:
         symptoms = [item for item in SYMPTOM_TERMS if item in question]
         tongue_tags = [item for item in TONGUE_TERMS if item in question]
@@ -463,12 +562,20 @@ class SmartQAService:
         if not has_exam:
             missing_items.append("检查结果")
 
+        structured_signal_count = len(symptoms) + len(tongue_tags) + len(pulse_tags)
+        if duration:
+            structured_signal_count += 1
+        if has_exam:
+            structured_signal_count += 1
+
         return {
             "symptoms": symptoms,
             "tongue_tags": tongue_tags,
             "pulse_tags": pulse_tags,
             "risk_history": risk_history,
             "duration": duration,
+            "has_exam": has_exam,
+            "structured_signal_count": structured_signal_count,
             "check_status": check_status,
             "attachment_summary": attachment_summary,
             "missing_items": missing_items,
@@ -520,6 +627,7 @@ class SmartQAService:
         boundary: Dict[str, Any],
     ) -> Dict[str, Any]:
         evidence_titles = [item.get("title", "") for item in evidences[:3] if item.get("title")]
+        evidence_digest = self._build_evidence_digest(evidences)
         candidate_text = "、".join([f"{item['name']}({item['score']})" for item in syndrome_candidates[:3]]) or "暂无候选"
 
         system_prompt = (
@@ -538,9 +646,11 @@ class SmartQAService:
             f"建议治法：{therapy}\n"
             f"建议方药：{formula}\n"
             f"证据标题：{'；'.join(evidence_titles) if evidence_titles else '暂无'}\n"
+            f"检索证据摘要：\n{evidence_digest}\n"
             f"缺失信息：{'、'.join(missing_items) if missing_items else '无'}\n"
             f"边界状态：{'触发边界' if boundary.get('is_boundary') else '常规科普'}\n"
-            "要求：每个小节控制在3行以内；若触发边界，必须提示线下就医与医生确认。"
+            "要求：每个小节控制在3行以内；若触发边界，必须提示线下就医与医生确认；若有检索证据，"
+            "在【原因说明】中尽量使用[1][2]的编号方式说明依据。"
         )
 
         return llm_gateway_service.chat(
@@ -576,6 +686,7 @@ class SmartQAService:
         mode: str,
         attachments: List[Dict[str, Any]],
         evidence_count: int,
+        citation_count: int,
         top_syndrome: str,
         boundary: Dict[str, Any],
         missing_items: List[str],
@@ -598,12 +709,21 @@ class SmartQAService:
                 "message": f"命中可用证据 {evidence_count} 条",
             },
             {
+                "stage": "检索引用分析",
+                "status": "done" if citation_count > 0 else "watch",
+                "message": (
+                    f"已形成 {citation_count} 条可追溯引用"
+                    if citation_count > 0
+                    else "当前未命中高置信证据，建议补充症状/舌脉后重试"
+                ),
+            },
+            {
                 "stage": "大模型生成",
                 "status": "done" if llm_result.get("ok") else "watch",
                 "message": (
-                    f"{llm_result.get('provider', 'none')} / {llm_result.get('model', PRIMARY_LLM_MODEL)}"
+                    f"{SELF_MODEL_NAME} 已完成回答生成"
                     if llm_result.get("ok")
-                    else f"调用失败，已回退规则回答（{llm_result.get('error', 'fallback')})"
+                    else f"{SELF_MODEL_NAME} 暂不可用，已回退规则回答（{llm_result.get('error', 'fallback')})"
                 ),
             },
             {
@@ -775,6 +895,33 @@ class SmartQAService:
         if len(clean) <= 320:
             return clean
         return clean[:320] + "。完整内容请查看右侧文本。"
+
+    def _build_evidence_digest(self, evidences: List[Dict[str, Any]]) -> str:
+        if not evidences:
+            return "暂无"
+        lines: List[str] = []
+        for idx, item in enumerate(evidences[:3], start=1):
+            title = str(item.get("title", "")).strip() or "未命名证据"
+            snippet = str(item.get("snippet", "")).strip()
+            source_type = str(item.get("source_type", "")).strip()
+            if len(snippet) > 72:
+                snippet = snippet[:72] + "..."
+            lines.append(f"[{idx}] {title} | {source_type} | {snippet}")
+        return "\n".join(lines)
+
+    def _build_citation_block(self, evidences: List[Dict[str, Any]]) -> str:
+        if not evidences:
+            return ""
+        lines = ["【检索引用分析】"]
+        for idx, item in enumerate(evidences[:3], start=1):
+            title = str(item.get("title", "")).strip() or "未命名证据"
+            source_type = str(item.get("source_type", "")).strip() or "unknown"
+            snippet = str(item.get("snippet", "")).strip()
+            if len(snippet) > 86:
+                snippet = snippet[:86] + "..."
+            lines.append(f"[{idx}] {title}（{source_type}）: {snippet}")
+        lines.append("以上引用用于辅助推理，不替代执业医生面诊结论。")
+        return "\n".join(lines)
 
     def _normalize(self, text: str) -> str:
         return re.sub(r"\s+", " ", text or "").strip()
