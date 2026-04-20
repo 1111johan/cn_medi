@@ -25,8 +25,22 @@ def _load_local_env() -> None:
 _load_local_env()
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _resolve_data_dir() -> Path:
+    """Resolve a writable data directory for both local and serverless runtimes."""
+    preferred = Path(os.getenv("TCM_DATA_DIR", str(BASE_DIR / "data")))
+    try:
+        preferred.mkdir(parents=True, exist_ok=True)
+        return preferred.resolve()
+    except OSError:
+        # Vercel/Lambda runtime filesystem is read-only except /tmp.
+        fallback = Path("/tmp/tcm-data")
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback.resolve()
+
+
+DATA_DIR = _resolve_data_dir()
 
 # 默认读取项目外层目录下的“中医药”数据库，可用 TCM_PRO_DATA_DIR 覆盖。
 PROFESSIONAL_DATA_DIR = Path(
