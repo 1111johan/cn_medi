@@ -33,6 +33,33 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+## 2.1 Vite 前端部署（Vercel 推荐）
+
+仓库已新增 `frontend/`（Vite 静态页面），可直接部署到 Vercel。
+
+本地预览：
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+生产构建：
+
+```bash
+cd frontend
+npm run build
+```
+
+如需对接后端 API，请在 `frontend/.env`（或 Vercel 环境变量）配置：
+
+```bash
+VITE_API_BASE=https://your-api-domain.com
+```
+
+> 说明：Vercel 会使用根目录 `vercel.json`，执行 `frontend` 的 Vite 构建并发布 `frontend/dist`。
+
 如需指定专业中医数据库目录（默认读取项目同级目录下 `中医药`）：
 
 ```bash
