@@ -1,0 +1,72 @@
+[
+  {
+    "feedback_id": "69d727b9-ebc0-4ea9-a7ec-6bd4b0d033ba",
+    "created_at": "2026-04-20T07:18:32.637063",
+    "case_id": "smoke-case-20260420151832-33ab41",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "66c9ee5e-478d-4f30-a317-1f2b511a3886",
+    "created_at": "2026-04-20T07:19:10.647286",
+    "case_id": "smoke-case-20260420151910-11a7cf",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "63320704-dfee-46a7-8860-6e2bef2fba8d",
+    "created_at": "2026-04-20T07:32:58.969686",
+    "case_id": "case-20260419-001",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "",
+    "effectiveness": null,
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "5184dbf4-66e2-421e-82d0-ae0006b4249b",
+    "created_at": "2026-04-20T07:50:36.695071",
+    "case_id": "smoke-case-20260420155036-298a13",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "79cc37aa-6372-489b-a594-85cec36f2fb4",
+    "created_at": "2026-04-20T07:59:22.645927",
+    "case_id": "smoke-case-20260420155913-0a9a72",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "0a1b07c3-0612-46fb-8a63-81ffd3120931",
+    "created_at": "2026-04-20T08:02:00.029731",
+    "case_id": "smoke-case-20260420160149-d44e0c",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  },
+  {
+    "feedback_id": "e8c686ab-5c54-46b4-8180-8a1347bb91bb",
+    "created_at": "2026-04-20T08:14:37.126833",
+    "case_id": "smoke-case-20260420161427-80884f",
+    "actor": "doctor",
+    "action": "accept",
+    "comments": "烟测通过",
+    "effectiveness": "pending",
+    "patched_formula": null
+  }
+]

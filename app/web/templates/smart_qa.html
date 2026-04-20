@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="qa-master">
+  <header class="qa-header card">
+    <div class="qa-header-left">
+      <div class="qa-mark">医脉相承 AI</div>
+      <div class="qa-submark">数字人智能问答中枢</div>
+    </div>
+
+    <div class="qa-mode-segment" id="qa-mode-segment">
+      <button type="button" class="mode-pill active" data-mode="text">问诊模式</button>
+      <button type="button" class="mode-pill" data-mode="mixed">知识问答</button>
+      <button type="button" class="mode-pill" data-mode="document">方药解析</button>
+      <button type="button" class="mode-pill" data-mode="research">科研检索</button>
+    </div>
+
+    <div class="qa-header-right">
+      <button type="button" class="mini-icon-btn" id="qa-history-btn">历史会话</button>
+      <button type="button" class="mini-icon-btn" id="qa-notice-btn">通知</button>
+      <div class="qa-model-chip" id="qa-model-chip">模型状态：online</div>
+    </div>
+  </header>
+
+  <section class="qa-layout">
+    <aside class="qa-pane-left card">
+      <div class="avatar-stage" id="avatar-stage">
+        <div class="stage-bg-grid"></div>
+        <div class="stage-particles"></div>
+
+        <div
+          id="dh-avatar"
+          class="dh-avatar calm"
+          data-model-base="{{ digital_human_assets.base_url }}"
+          data-model-file="{{ digital_human_assets.model_file }}"
+          data-tex-diffuse="{{ digital_human_assets.tex_diffuse }}"
+          data-tex-normal="{{ digital_human_assets.tex_normal }}"
+          data-tex-roughness="{{ digital_human_assets.tex_roughness }}"
+          data-tex-metallic="{{ digital_human_assets.tex_metallic }}"
+          data-model-ready="{{ 'true' if digital_human_assets.ready else 'false' }}"
+        >
+          <canvas id="dh-model-canvas" class="dh-model-canvas" aria-label="数字人三维模型"></canvas>
+          <div id="dh-avatar-fallback" class="dh-avatar-fallback">
+            <div class="fallback-face"></div>
+            <div class="fallback-tip">数字人模型加载中</div>
+          </div>
+        </div>
+
+        <div class="dh-state-badge" id="dh-state-badge">待机</div>
+      </div>
+
+      <section class="avatar-state-card" id="avatar-state-card">
+        <div class="state-title">数字人状态</div>
+        <div class="state-main" id="avatar-state-main">待机中，随时可咨询</div>
+        <div class="state-desc" id="avatar-state-desc">请输入问题，或点击“开始语音问诊”。</div>
+      </section>
+
+      <section class="transcript-card">
+        <div class="state-title">实时语音转写</div>
+        <div class="transcript-content" id="qa-transcript">暂无语音输入</div>
+        <div class="transcript-tags" id="qa-transcript-tags"></div>
+      </section>
+
+      <section class="quick-action-card">
+        <div class="state-title">快捷能力</div>
+        <div class="quick-action-grid">
+          <button type="button" class="quick-btn" id="action-voice">开始语音问诊</button>
+          <button type="button" class="quick-btn" id="action-upload-tongue">上传舌照</button>
+          <button type="button" class="quick-btn" id="action-upload-record">上传病历/处方</button>
+          <button type="button" class="quick-btn" id="action-switch-avatar">切换专家数字人</button>
+          <button type="button" class="quick-btn" id="action-play">播放讲解</button>
+          <button type="button" class="quick-btn" id="action-stop">停止播报</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="qa-pane-center card">
+      <header class="conversation-header">
+        <div>
+          <h3 id="conversation-title">初诊问答会话</h3>
+          <div class="conversation-tags" id="conversation-tags">
+            <span class="tag-chip">中医问诊</span>
+            <span class="tag-chip">数字人协同</span>
+            <span class="tag-chip">多模态分析中</span>
+          </div>
+        </div>
+        <div class="conversation-actions">
+          <button type="button" class="mini-icon-btn">收藏</button>
+          <button type="button" class="mini-icon-btn">导出</button>
+          <button type="button" class="mini-icon-btn" id="new-session-btn">新建会话</button>
+        </div>
+      </header>
+
+      <section class="chat-stream" id="qa-chat-stream">
+        <div class="chat-message assistant">
+          <div class="chat-role">数字医生</div>
+          <div class="chat-content">欢迎使用智慧问答，请直接输入问题。</div>
+        </div>
+      </section>
+
+      <form id="qa-form" class="input-dock">
+        <div class="input-main-row compact-row">
+          <textarea id="qa-question" name="question" rows="3" placeholder="请输入症状、病史、舌象、脉象或您想问的问题……" required></textarea>
+
+          <div class="input-right-tools inline-tools">
+            <button type="button" class="tool-btn" id="tool-image">图片上传</button>
+            <button type="button" class="tool-btn" id="tool-file">文件上传</button>
+            <button type="button" class="tool-btn" id="tool-mic">语音</button>
+            <button type="submit" class="btn">发送</button>
+          </div>
+        </div>
+
+        <div hidden>
+          <select name="mode" id="qa-mode" class="sub-select">
+            <option value="text">text</option>
+            <option value="voice">voice</option>
+            <option value="image">image</option>
+            <option value="document">document</option>
+            <option value="mixed">mixed</option>
+            <option value="research">research</option>
+          </select>
+          <select name="scenario" id="qa-scenario-select" class="sub-select">
+            <option value="">自动识别场景</option>
+          </select>
+          <input id="qa-attachment-hint" type="text" class="sub-text">
+          <input type="checkbox" id="qa-auto-speak" checked>
+          <button type="button" id="qa-clear"></button>
+          <input id="qa-files" type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="sub-file-input">
+        </div>
+      </form>
+    </section>
+
+    <aside class="qa-pane-right card">
+      <div class="result-tabs" id="result-tabs">
+        <button type="button" class="tab-btn active" data-tab="results">结果</button>
+        <button type="button" class="tab-btn" data-tab="evidence">依据</button>
+        <button type="button" class="tab-btn" data-tab="graph">图谱</button>
+        <button type="button" class="tab-btn" data-tab="tasks">任务</button>
+      </div>
+
+      <section class="tab-panel active" data-panel="results">
+        <div class="panel-list" id="panel-results"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="evidence">
+        <div class="panel-list" id="panel-evidence"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="graph">
+        <div class="panel-list" id="panel-graph"></div>
+      </section>
+
+      <section class="tab-panel" data-panel="tasks">
+        <div class="panel-list" id="panel-tasks"></div>
+      </section>
+
+      <section class="speech-script-card">
+        <div class="state-title">数字人播报脚本</div>
+        <div id="qa-speech-script" class="script-text">提交问题后自动生成播报脚本。</div>
+      </section>
+
+      <section class="upload-preview-card">
+        <div class="state-title">已选材料</div>
+        <div id="qa-upload-list" class="upload-list">
+          <div class="result-box">尚未选择文件。</div>
+        </div>
+      </section>
+    </aside>
+  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/smart_qa.js"></script>
+{% endblock %}

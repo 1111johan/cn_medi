@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">R&D Collaboration</p>
+    <h2 class="hero-title">中药研发工作台</h2>
+    <p class="hero-text">围绕“药材-方剂-症状-证候-现代研究”关系链进行辅助分析，并将研发结论沉淀为可检索知识资产。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>感知输入</span><strong>tongue/face/herb</strong></div>
+    <div class="mini-stat"><span>关系检索</span><strong>专业库 + 本地库</strong></div>
+    <div class="mini-stat"><span>项目沉淀</span><strong>知识中台</strong></div>
+  </div>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>多模态感知分析</h3>
+    <form id="perception-form" class="form-grid">
+      <label>
+        输入类型
+        <select name="image_type">
+          <option value="tongue">tongue</option>
+          <option value="face">face</option>
+          <option value="herb">herb</option>
+        </select>
+      </label>
+      <label class="full">
+        观察描述（逗号分隔）
+        <input type="text" name="observations" value="舌淡, 苔白腻, 齿痕">
+      </label>
+      <label class="full">
+        备注
+        <textarea name="notes" rows="3" placeholder="可输入紫暗、裂纹、颜色异常等"></textarea>
+      </label>
+      <button type="submit" class="btn">执行感知分析</button>
+    </form>
+    <div class="result-box" id="perception-result-box">等待感知分析。</div>
+  </article>
+
+  <article class="card">
+    <h3>关系检索（方剂/药材/证候）</h3>
+    <form id="search-form" class="form-grid">
+      <label class="full">
+        检索词
+        <input type="text" name="q" value="痰湿瘀阻 方剂 药材 治法">
+      </label>
+      <button type="submit" class="btn">检索本地知识中台</button>
+    </form>
+
+    <form id="professional-search-form" class="form-grid top-gap">
+      <label class="full">
+        专业库检索词
+        <input type="text" name="q" value="痰湿瘀阻 治法 方药 医案">
+      </label>
+      <button type="submit" class="btn secondary">检索专业数据库</button>
+    </form>
+
+    <div class="evidence-list top-gap" id="relation-evidence-list"></div>
+
+    <h3 class="top-gap">研发决策区</h3>
+    <div id="rnd-decision-list" class="stack-list">
+      <div class="result-box">执行关系检索后生成“配伍建议/风险禁忌/潜在适应证”草案。</div>
+    </div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>研发记录沉淀</h3>
+    <form id="rnd-ingest-form" class="form-grid">
+      <label>
+        记录标题
+        <input type="text" name="title" value="研发记录：痰湿瘀阻配伍分析">
+      </label>
+      <label>
+        标签（逗号分隔）
+        <input type="text" name="tags" value="研发, 方剂关系, 药材">
+      </label>
+      <label class="full">
+        分析结论
+        <textarea name="content" rows="5" placeholder="记录候选配伍、证据出处与结论"></textarea>
+      </label>
+      <button type="submit" class="btn">写入知识中台</button>
+    </form>
+    <pre class="result" id="rnd-ingest-result"></pre>
+  </article>
+
+  <article class="card">
+    <h3>专业库状态</h3>
+    <button id="load-prof-stats" class="btn secondary">加载专业库状态</button>
+    <pre class="result" id="prof-stats-result"></pre>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/rnd.js"></script>
+{% endblock %}

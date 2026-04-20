@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">Operations & Governance</p>
+    <h2 class="hero-title">运营治理驾驶舱</h2>
+    <p class="hero-text">面向机构管理者监控临床、科研、研发三场景运行质量，追踪审计、风险、版本与知识增长趋势。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>审计留痕</span><strong id="op-audit-count">0</strong></div>
+    <div class="mini-stat"><span>反馈回流</span><strong id="op-feedback-count">0</strong></div>
+    <div class="mini-stat"><span>治理状态</span><strong id="op-governance-status">RUNNING</strong></div>
+  </div>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card"><p class="kpi-label">临床调用量</p><p class="kpi-value" id="op-clinical-events">0</p><p class="kpi-note">接诊解析/辨证/草案/反馈</p></article>
+  <article class="kpi-card"><p class="kpi-label">科研调用量</p><p class="kpi-value" id="op-research-events">0</p><p class="kpi-note">问答与证据回链</p></article>
+  <article class="kpi-card"><p class="kpi-label">研发调用量</p><p class="kpi-value" id="op-rnd-events">0</p><p class="kpi-note">感知分析与关系检索</p></article>
+  <article class="kpi-card"><p class="kpi-label">问答调用量</p><p class="kpi-value" id="op-smart-qa-events">0</p><p class="kpi-note">数字人咨询与问答</p></article>
+  <article class="kpi-card"><p class="kpi-label">证据可追溯率</p><p class="kpi-value" id="op-trace">0%</p><p class="kpi-note">科研回答含出处比例</p></article>
+  <article class="kpi-card"><p class="kpi-label">医生采纳率</p><p class="kpi-value" id="op-adoption">0%</p><p class="kpi-note">accept/modify 占比</p></article>
+  <article class="kpi-card"><p class="kpi-label">临床闭环数</p><p class="kpi-value" id="op-loops">0</p><p class="kpi-note">证候-方药-文书-反馈</p></article>
+  <article class="kpi-card"><p class="kpi-label">专业库规模</p><p class="kpi-value" id="op-prof-count">0</p><p class="kpi-note">古籍与医案索引条目</p></article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>四闭环治理健康度</h3>
+    <div id="op-loop-list" class="stack-list"></div>
+
+    <h3 class="top-gap">风险拦截与高危事件</h3>
+    <div id="op-risk-audits" class="audit-mini-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>模型与规则版本</h3>
+    <div class="stack-list">
+      <div class="stack-item">
+        <div class="stack-title"><span>模型版本</span><span class="badge ok">MVP-0.2</span></div>
+        <div class="stack-desc">基于规则引擎 + 检索增强 + 专业库证据链。</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-title"><span>规则版本</span><span class="badge watch">rule-set-2026.04</span></div>
+        <div class="stack-desc">支持痰湿瘀阻、脾虚痰瘀、气血两虚三类主证规则。</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-title"><span>发布策略</span><span class="badge ok">灰度发布</span></div>
+        <div class="stack-desc">异常样本自动进入专家审核中心，确认后更新规则。</div>
+      </div>
+    </div>
+
+    <h3 class="top-gap">机构级任务</h3>
+    <div id="op-task-list" class="task-list"></div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>审计查询</h3>
+    <form id="op-audit-form" class="form-grid">
+      <label>
+        操作人
+        <input type="text" name="actor" placeholder="doctor / expert / system">
+      </label>
+      <label>
+        事件类型
+        <input type="text" name="event_type" placeholder="reason.formula">
+      </label>
+      <label>
+        条数
+        <input type="number" name="limit" value="80" min="1" max="300">
+      </label>
+      <button type="submit" class="btn">查询审计</button>
+    </form>
+    <div id="op-audit-list" class="audit-mini-list top-gap"></div>
+  </article>
+
+  <article class="card">
+    <h3>规则概览</h3>
+    <button id="op-load-rules" class="btn secondary">加载规则</button>
+    <div id="op-rules-list" class="stack-list top-gap"></div>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/operations.js"></script>
+{% endblock %}

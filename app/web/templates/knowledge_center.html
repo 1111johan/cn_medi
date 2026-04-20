@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">Knowledge Middle Platform</p>
+    <h2 class="hero-title">知识中台</h2>
+    <p class="hero-text">将症状、证候、治法、方剂、药材、古籍、医案、指南统一建模，支持版本、关系、来源、审核状态管理。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>知识对象</span><strong id="kc-knowledge-count">0</strong></div>
+    <div class="mini-stat"><span>专业库索引</span><strong id="kc-prof-count">0</strong></div>
+    <div class="mini-stat"><span>当前对象类型</span><strong id="kc-active-type">全部</strong></div>
+  </div>
+</section>
+
+<section class="center-layout">
+  <article class="card">
+    <h3>知识对象类型</h3>
+    <div class="queue-list" id="kc-type-list">
+      <button class="queue-item active" data-type="all">全部对象</button>
+      <button class="queue-item" data-type="symptom">症状</button>
+      <button class="queue-item" data-type="syndrome">证候</button>
+      <button class="queue-item" data-type="therapy">治法</button>
+      <button class="queue-item" data-type="formula">方剂</button>
+      <button class="queue-item" data-type="herb">药材</button>
+      <button class="queue-item" data-type="classic">古籍</button>
+      <button class="queue-item" data-type="case">医案</button>
+      <button class="queue-item" data-type="guideline">指南</button>
+      <button class="queue-item" data-type="paper">论文</button>
+    </div>
+
+    <h3 class="top-gap">知识入库</h3>
+    <form id="kc-ingest-form" class="form-grid">
+      <label>
+        来源类型
+        <select name="source_type">
+          <option value="classic">classic</option>
+          <option value="guideline">guideline</option>
+          <option value="case">case</option>
+          <option value="formula">formula</option>
+          <option value="herb">herb</option>
+          <option value="paper">paper</option>
+        </select>
+      </label>
+      <label>
+        标题
+        <input type="text" name="title" required>
+      </label>
+      <label class="full">
+        内容
+        <textarea name="content" rows="4" required></textarea>
+      </label>
+      <label class="full">
+        标签
+        <input type="text" name="tags" placeholder="证候, 治法, 方剂">
+      </label>
+      <button type="submit" class="btn">写入知识中台</button>
+    </form>
+    <pre class="result" id="kc-ingest-result"></pre>
+  </article>
+
+  <article class="card">
+    <div class="row-between">
+      <h3>对象列表</h3>
+      <button id="kc-refresh" class="btn secondary">刷新</button>
+    </div>
+    <div id="kc-object-list" class="evidence-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>对象详情与关系</h3>
+    <div id="kc-object-detail" class="result-box">请选择左侧对象查看详情。</div>
+
+    <h3 class="top-gap">关系图谱摘要</h3>
+    <div id="kc-source-breakdown" class="stack-list"></div>
+
+    <h3 class="top-gap">版本与治理动作</h3>
+    <ul class="checkpoint-list">
+      <li>采纳到临床推理规则</li>
+      <li>加入科研教学案例库</li>
+      <li>标记争议并发起专家审核</li>
+      <li>加入再训练样本池</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/knowledge_center.js"></script>
+{% endblock %}

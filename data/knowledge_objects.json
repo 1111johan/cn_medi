@@ -1,0 +1,225 @@
+[
+  {
+    "object_id": "53fac57d-c2e0-4759-88f6-42118ff3327b",
+    "source_type": "classic",
+    "title": "《黄帝内经》脾主运化",
+    "content": "脾为后天之本，主运化水谷精微。脾虚则生痰湿，久则可兼瘀。",
+    "tags": [
+      "脾虚",
+      "痰湿",
+      "病机"
+    ],
+    "metadata": {
+      "book": "黄帝内经"
+    },
+    "created_at": "2026-04-18T19:22:29.692071"
+  },
+  {
+    "object_id": "51b54731-a560-4f9b-9a39-14d20482f8b4",
+    "source_type": "guideline",
+    "title": "中医内科证候辨治通用原则",
+    "content": "辨证需遵循证据链：症状体征、舌脉信息、病程演变、治法方药一致性。",
+    "tags": [
+      "辨证",
+      "证据链",
+      "治法"
+    ],
+    "metadata": {
+      "version": "MVP"
+    },
+    "created_at": "2026-04-18T19:22:29.692071"
+  },
+  {
+    "object_id": "56f85ad9-293a-43e0-a73b-06aeae9da244",
+    "source_type": "formula",
+    "title": "归脾汤应用要点",
+    "content": "归脾汤常用于气血不足、心脾两虚所致心悸失眠、乏力纳差等。",
+    "tags": [
+      "归脾汤",
+      "气血两虚"
+    ],
+    "metadata": {
+      "category": "方剂"
+    },
+    "created_at": "2026-04-18T19:22:29.692071"
+  },
+  {
+    "object_id": "2c0900b3-80a3-4be5-b6e2-4a77073ad780",
+    "source_type": "formula",
+    "title": "二陈汤合血府逐瘀汤应用要点",
+    "content": "二陈汤偏于化痰祛湿，血府逐瘀汤偏于活血行气，合方可用于痰瘀互结。",
+    "tags": [
+      "痰湿瘀阻",
+      "方药"
+    ],
+    "metadata": {
+      "category": "方剂"
+    },
+    "created_at": "2026-04-18T19:22:29.692071"
+  },
+  {
+    "object_id": "d411c6f3-a52a-4633-a5c2-424621e1248f",
+    "source_type": "paper",
+    "title": "中医证候与现代研究映射示例",
+    "content": "可将症状聚类与证候标签联动，用于科研探索和临床辅助决策。",
+    "tags": [
+      "科研",
+      "证候",
+      "映射"
+    ],
+    "metadata": {
+      "type": "review"
+    },
+    "created_at": "2026-04-18T19:22:29.692071"
+  },
+  {
+    "object_id": "393a6cb2-a587-4b33-b19e-7bb19c78153c",
+    "source_type": "case",
+    "title": "门诊案例：脾虚痰瘀伴胸闷",
+    "content": "患者乏力胸闷2月，舌淡胖苔白腻，脉濡涩，治以健脾化痰、活血化瘀。",
+    "tags": [
+      "门诊案例",
+      "脾虚痰瘀",
+      "胸闷"
+    ],
+    "metadata": {
+      "department": "中医内科"
+    },
+    "created_at": "2026-04-20T06:57:27.598110"
+  },
+  {
+    "object_id": "c424740a-c745-41fd-a67b-eb09e4efb6c9",
+    "source_type": "paper",
+    "title": "证候量化研究样例",
+    "content": "通过症状聚类和舌脉特征映射构建证候预测模型，提升辅助辨证一致性。",
+    "tags": [
+      "证候",
+      "量化",
+      "研究"
+    ],
+    "metadata": {
+      "year": 2025
+    },
+    "created_at": "2026-04-20T06:57:27.603000"
+  },
+  {
+    "object_id": "4b6e696b-0764-464e-bcbf-e6b535af7b3b",
+    "source_type": "classic",
+    "title": "《伤寒论》温胆思路摘录",
+    "content": "痰热内扰可见心烦不寐，治宜和胃化痰、清胆宁心。",
+    "tags": [
+      "伤寒论",
+      "痰热扰心",
+      "失眠"
+    ],
+    "metadata": {
+      "book": "伤寒论"
+    },
+    "created_at": "2026-04-20T06:57:27.606046"
+  },
+  {
+    "object_id": "106a64e6-1de7-413c-89c0-4e9e8c76848f",
+    "source_type": "guideline",
+    "title": "失眠中医辨证路径（示例）",
+    "content": "建议按主诉、舌脉、病程、伴随症状构建证据链，再做证候排序与治法映射。",
+    "tags": [
+      "失眠",
+      "辨证",
+      "证据链"
+    ],
+    "metadata": {
+      "org": "MVP示例"
+    },
+    "created_at": "2026-04-20T06:57:27.610912"
+  },
+  {
+    "object_id": "80c9d844-194f-4be5-b5dd-5819ed11f0d7",
+    "source_type": "case",
+    "title": "烟测样例-20260420151832-33ab41",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420151832-33ab41"
+    },
+    "created_at": "2026-04-20T07:18:32.284757"
+  },
+  {
+    "object_id": "96f35e13-8e4d-449b-afa9-30d351e9e3c3",
+    "source_type": "case",
+    "title": "烟测样例-20260420151910-11a7cf",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420151910-11a7cf"
+    },
+    "created_at": "2026-04-20T07:19:10.326485"
+  },
+  {
+    "object_id": "2f5eacdb-0ad6-4303-8703-bd36409cbc54",
+    "source_type": "case",
+    "title": "烟测样例-20260420155036-298a13",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420155036-298a13"
+    },
+    "created_at": "2026-04-20T07:50:36.337206"
+  },
+  {
+    "object_id": "c7f0f24f-ecc8-4f45-98c3-5110703f9e3d",
+    "source_type": "case",
+    "title": "烟测样例-20260420155913-0a9a72",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420155913-0a9a72"
+    },
+    "created_at": "2026-04-20T07:59:13.178924"
+  },
+  {
+    "object_id": "d4e7a2a4-c571-4b0f-8c5c-0dadb148b6a5",
+    "source_type": "case",
+    "title": "烟测样例-20260420160149-d44e0c",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420160149-d44e0c"
+    },
+    "created_at": "2026-04-20T08:01:50.005825"
+  },
+  {
+    "object_id": "3b60cc31-52e6-478f-9a01-9677eafc33c8",
+    "source_type": "case",
+    "title": "烟测样例-20260420161427-80884f",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260420161427-80884f"
+    },
+    "created_at": "2026-04-20T08:14:27.631358"
+  }
+]

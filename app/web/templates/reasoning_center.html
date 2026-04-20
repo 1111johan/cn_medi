@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">Reasoning Middle Platform</p>
+    <h2 class="hero-title">推理中台</h2>
+    <p class="hero-text">将检索、规则、排序、解释、人工确认串成可调试、可发布、可审计的神经符号融合推理链。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>推理模板</span><strong>Clinical-RAG-NSFR</strong></div>
+    <div class="mini-stat"><span>规则条目</span><strong id="rc-rule-count">0</strong></div>
+    <div class="mini-stat"><span>发布状态</span><strong>灰度中</strong></div>
+  </div>
+</section>
+
+<section class="center-layout">
+  <article class="card">
+    <h3>配置导航</h3>
+    <div class="queue-list">
+      <button class="queue-item active">推理模板</button>
+      <button class="queue-item">规则库</button>
+      <button class="queue-item">模型路由</button>
+      <button class="queue-item">检索配置</button>
+      <button class="queue-item">风险校验</button>
+      <button class="queue-item">Prompt 版本</button>
+    </div>
+
+    <h3 class="top-gap">调试输入</h3>
+    <form id="rc-trace-form" class="form-grid">
+      <label class="full">
+        症状（逗号分隔）
+        <input type="text" name="symptoms" value="胸闷, 痰多, 肢体困重" required>
+      </label>
+      <label>
+        舌象标签
+        <input type="text" name="tongue_tags" value="苔白腻, 舌胖">
+      </label>
+      <label>
+        脉象标签
+        <input type="text" name="pulse_tags" value="脉滑">
+      </label>
+      <button type="submit" class="btn">执行推理链调试</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h3>推理链路可视化</h3>
+    <div id="rc-trace-steps" class="stack-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>发布与版本控制</h3>
+    <div id="rc-rules-list" class="stack-list"></div>
+
+    <h3 class="top-gap">操作面板</h3>
+    <div class="stack-list">
+      <div class="stack-item">
+        <div class="stack-title"><span>对比版本</span><span class="badge watch">v0.1 vs v0.2</span></div>
+        <div class="stack-desc">对比规则覆盖、风险拦截、采纳率变化。</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-title"><span>发布控制</span><span class="badge ok">Canary</span></div>
+        <div class="stack-desc">先灰度到 10% 临床请求，审计无异常后全量。</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-title"><span>异常样本回流</span><span class="badge risk">待处理</span></div>
+        <div class="stack-desc">对驳回案例自动打标签，进入专家审核中心。</div>
+      </div>
+    </div>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/reasoning_center.js"></script>
+{% endblock %}

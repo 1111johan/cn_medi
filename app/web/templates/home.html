@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">Platform Strategy</p>
+    <h2 class="hero-title">平台版 MVP 运行看板</h2>
+    <p class="hero-text">按照《中医智能体平台MVP方案》对齐“中台能力 + 三场景闭环 + 治理留痕”，展示当前落地进度与风险点。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat">
+      <span>临床闭环数</span>
+      <strong id="metric-clinical-loop">0</strong>
+    </div>
+    <div class="mini-stat">
+      <span>证据可追溯率</span>
+      <strong id="metric-trace">0%</strong>
+    </div>
+    <div class="mini-stat">
+      <span>医生采纳率</span>
+      <strong id="metric-adoption">0%</strong>
+    </div>
+  </div>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card">
+    <p class="kpi-label">知识对象</p>
+    <p class="kpi-value" id="metric-knowledge">0</p>
+    <p class="kpi-note">本地知识中台对象</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">专业库记录</p>
+    <p class="kpi-value" id="metric-professional">0</p>
+    <p class="kpi-note">古籍/医案解析索引</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">反馈记录</p>
+    <p class="kpi-value" id="metric-feedback">0</p>
+    <p class="kpi-note">采纳/修改/拒绝回流</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">审计事件</p>
+    <p class="kpi-value" id="metric-audit">0</p>
+    <p class="kpi-note">关键动作全链留痕</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">临床事件</p>
+    <p class="kpi-value" id="metric-clinical-events">0</p>
+    <p class="kpi-note">四诊-辨证-草案-反馈</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">科研事件</p>
+    <p class="kpi-value" id="metric-research-events">0</p>
+    <p class="kpi-note">问答与证据链查询</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">研发事件</p>
+    <p class="kpi-value" id="metric-rnd-events">0</p>
+    <p class="kpi-note">感知分析与关系检索</p>
+  </article>
+  <article class="kpi-card">
+    <p class="kpi-label">问答咨询量</p>
+    <p class="kpi-value" id="metric-smart-qa-events">0</p>
+    <p class="kpi-note">数字人咨询调用</p>
+  </article>
+</section>
+
+<section class="grid cards-3">
+  <article class="card scene-entry">
+    <h3>临床智能工作站</h3>
+    <p>围绕门诊队列、四诊证据、证候排序、方药草案、文书协作、反馈回流形成临床闭环。</p>
+    <a href="/workbench/clinical">进入临床场景 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>科研与古籍研究台</h3>
+    <p>支持问题检索、证据回链、术语映射、案例沉淀、研究摘要导出，确保回答可引用可验证。</p>
+    <a href="/workbench/research">进入科研场景 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>智慧问答数字人</h3>
+    <p>支持语音/图片/文档咨询，自动识别场景并给出分步骤就医建议；高风险问题自动触发边界提示。</p>
+    <a href="/workbench/smart-qa">进入智慧问答 →</a>
+  </article>
+  <article class="card scene-entry">
+    <h3>中药研发工具链</h3>
+    <p>联动药材、组方、证候、现代研究证据，支持关系检索、风险提示与研发记录回写。</p>
+    <a href="/workbench/rnd">进入研发场景 →</a>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>能力覆盖矩阵</h3>
+    <div id="architecture-list" class="stack-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>四闭环健康度</h3>
+    <div id="loop-list" class="stack-list"></div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>90 天路线图</h3>
+    <div id="roadmap-list" class="roadmap-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>今日任务队列</h3>
+    <div id="task-queue" class="task-list"></div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>知识源分布</h3>
+    <div id="source-breakdown" class="stack-list"></div>
+
+    <h3 class="top-gap">最近审计</h3>
+    <div id="recent-audits" class="audit-mini-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>关键趋势</h3>
+    <div class="trend-strip" id="trend-strip"></div>
+
+    <h3 class="top-gap">待审核任务</h3>
+    <div id="pending-review-list" class="audit-mini-list"></div>
+  </article>
+</section>
+
+<section class="grid cards-2">
+  <article class="card">
+    <h3>快速知识入库</h3>
+    <form id="ingest-form" class="form-grid">
+      <label>
+        来源类型
+        <select name="source_type">
+          <option value="classic">classic</option>
+          <option value="guideline">guideline</option>
+          <option value="case">case</option>
+          <option value="formula">formula</option>
+          <option value="herb">herb</option>
+          <option value="paper">paper</option>
+        </select>
+      </label>
+      <label>
+        标题
+        <input type="text" name="title" required placeholder="如：脾虚痰瘀门诊经验总结">
+      </label>
+      <label class="full">
+        内容
+        <textarea name="content" rows="4" required placeholder="输入古籍段落、临床经验或研究摘要"></textarea>
+      </label>
+      <label class="full">
+        标签（逗号分隔）
+        <input type="text" name="tags" placeholder="脾虚, 痰瘀, 方剂">
+      </label>
+      <button type="submit" class="btn">写入知识中台</button>
+    </form>
+    <pre class="result" id="ingest-result"></pre>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/home.js"></script>
+{% endblock %}

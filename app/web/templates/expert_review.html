@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero card">
+  <div>
+    <p class="section-kicker">Expert Review & Arbitration</p>
+    <h2 class="hero-title">专家审核与仲裁中心</h2>
+    <p class="hero-text">把 AI 初判、证据展开、争议仲裁、规则更新和再训练样本回流做成标准化闭环。</p>
+  </div>
+  <div class="hero-right">
+    <div class="mini-stat"><span>待审核</span><strong id="er-pending">0</strong></div>
+    <div class="mini-stat"><span>已升级仲裁</span><strong id="er-escalated">0</strong></div>
+    <div class="mini-stat"><span>已通过</span><strong id="er-approved">0</strong></div>
+  </div>
+</section>
+
+<section class="center-layout">
+  <article class="card">
+    <h3>任务筛选</h3>
+    <form id="er-filter-form" class="form-grid">
+      <label>
+        状态
+        <select name="status">
+          <option value="">全部</option>
+          <option value="pending">pending</option>
+          <option value="escalated">escalated</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
+          <option value="modified">modified</option>
+        </select>
+      </label>
+      <label>
+        类型
+        <select name="task_type">
+          <option value="">全部</option>
+          <option value="knowledge">knowledge</option>
+          <option value="case">case</option>
+          <option value="risk">risk</option>
+        </select>
+      </label>
+      <label>
+        优先级
+        <select name="priority">
+          <option value="">全部</option>
+          <option value="high">high</option>
+          <option value="medium">medium</option>
+          <option value="low">low</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">加载任务</button>
+    </form>
+
+    <h3 class="top-gap">任务列表</h3>
+    <div id="er-task-list" class="evidence-list"></div>
+  </article>
+
+  <article class="card">
+    <h3>证据展开区</h3>
+    <div id="er-task-detail" class="result-box">请选择左侧任务查看 AI 初判和证据引用。</div>
+
+    <h3 class="top-gap">历史相似案例</h3>
+    <div id="er-similar-cases" class="stack-list">
+      <div class="stack-item">
+        <div class="stack-title"><span>case://clinical-queue-002</span><span class="badge watch">similarity 0.79</span></div>
+        <div class="stack-desc">同样出现“痰湿与虚证并见”导致方药争议。</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-title"><span>case://clinical-queue-008</span><span class="badge watch">similarity 0.73</span></div>
+        <div class="stack-desc">孕期风险规则与活血建议冲突，最终人工确认驳回。</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <h3>仲裁动作</h3>
+    <form id="er-decision-form" class="form-grid">
+      <label>
+        当前任务ID
+        <input type="text" name="task_id" id="er-current-task" required>
+      </label>
+      <label>
+        动作
+        <select name="action">
+          <option value="approve">approve</option>
+          <option value="modify">modify</option>
+          <option value="reject">reject</option>
+          <option value="escalate">escalate</option>
+        </select>
+      </label>
+      <label class="full">
+        审核意见
+        <textarea name="comment" rows="4" placeholder="填写审核依据、修改建议或仲裁原因"></textarea>
+      </label>
+      <button type="submit" class="btn">提交审核结论</button>
+    </form>
+    <pre class="result" id="er-decision-result"></pre>
+
+    <h3 class="top-gap">闭环动作</h3>
+    <ul class="checkpoint-list">
+      <li>通过：写回知识库并纳入规则引用</li>
+      <li>修改：保留原案与修订版对比</li>
+      <li>驳回：写入负样本池并触发模型回归测试</li>
+      <li>升级：发起群体仲裁与高级专家会诊</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/expert_review.js"></script>
+{% endblock %}

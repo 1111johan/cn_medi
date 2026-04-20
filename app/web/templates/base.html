@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} - 中医智能体平台 MVP</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="ambient-shape shape-a"></div>
+  <div class="ambient-shape shape-b"></div>
+
+  <header class="topbar">
+    <div class="topbar-main">
+      <div class="brand-wrap">
+        <p class="brand-kicker">TCM Agent Platform</p>
+        <h1 class="brand-title">中医智能体平台 MVP</h1>
+        <p class="brand-subtitle">统一中台能力支撑临床辅助、科研传承、中药研发三类场景</p>
+      </div>
+
+      <div class="topbar-tools">
+        <label class="global-search-wrap">
+          <input id="global-search" type="text" placeholder="全局搜索：证候 / 方剂 / 医案 / 问答 / 规则 / 审计">
+        </label>
+        <div class="status-chip-group" id="global-status">
+          <span class="status-chip">模型版本：MVP-0.2</span>
+          <span class="status-chip">机构：示例机构</span>
+          <span class="status-chip">角色：平台管理员</span>
+          <span class="status-chip" id="api-health-chip">API: checking</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/" class="{% if active == 'home' %}active{% endif %}">平台总览</a>
+      <a href="/workbench/clinical" class="{% if active == 'clinical' %}active{% endif %}">临床辅助</a>
+      <a href="/workbench/research" class="{% if active == 'research' %}active{% endif %}">科研传承</a>
+      <a href="/workbench/smart-qa" class="{% if active == 'smart_qa' %}active{% endif %}">智慧问答</a>
+      <a href="/workbench/rnd" class="{% if active == 'rnd' %}active{% endif %}">中药研发</a>
+      <a href="/middle/knowledge" class="{% if active == 'knowledge_center' %}active{% endif %}">知识中台</a>
+      <a href="/middle/reasoning" class="{% if active == 'reasoning_center' %}active{% endif %}">推理中台</a>
+      <a href="/review/expert" class="{% if active == 'expert_review' %}active{% endif %}">专家审核</a>
+      <a href="/governance/operations" class="{% if active == 'operations' %}active{% endif %}">运营治理</a>
+    </nav>
+  </header>
+
+  <main class="container{% if page_class %} {{ page_class }}{% endif %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
+  <script src="/static/js/common.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

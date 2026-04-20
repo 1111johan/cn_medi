@@ -1,0 +1,105 @@
+[
+  {
+    "task_id": "e7bdcda7-446f-4e90-ac8b-e22077f736ed",
+    "created_at": "2026-04-18T20:47:52.897605",
+    "updated_at": "2026-04-18T20:57:38.100102",
+    "decision": null,
+    "decision_comment": null,
+    "reviewer": null,
+    "task_type": "knowledge",
+    "priority": "high",
+    "status": "pending",
+    "title": "证候规则冲突：痰湿瘀阻 vs 脾虚痰瘀",
+    "summary": "同一组症状在两条规则上评分接近，需专家判定主证与次证边界。",
+    "ai_prejudge": "建议主证：痰湿瘀阻（置信 0.63）",
+    "evidence_refs": [
+      "rule://痰湿瘀阻",
+      "rule://脾虚痰瘀",
+      "case://demo-2026-0419-A"
+    ]
+  },
+  {
+    "task_id": "ae19889a-1dc8-45d4-bda9-132687347ca1",
+    "created_at": "2026-04-18T20:47:52.897605",
+    "updated_at": "2026-04-18T20:47:52.897605",
+    "decision": null,
+    "decision_comment": null,
+    "reviewer": null,
+    "task_type": "case",
+    "priority": "medium",
+    "status": "pending",
+    "title": "争议案例：方药草案被医生驳回",
+    "summary": "系统推荐二陈汤合血府逐瘀汤，医生改为温胆汤加减，需原因归档。",
+    "ai_prejudge": "可能与患者体质偏虚及睡眠问题相关。",
+    "evidence_refs": [
+      "case://clinical-queue-002",
+      "feedback://modify-20260419-02"
+    ]
+  },
+  {
+    "task_id": "31d8c396-b076-47c0-9b6d-b3e11f838ca9",
+    "created_at": "2026-04-18T20:47:52.897605",
+    "updated_at": "2026-04-18T20:47:52.897605",
+    "decision": null,
+    "decision_comment": null,
+    "reviewer": null,
+    "task_type": "risk",
+    "priority": "high",
+    "status": "pending",
+    "title": "高风险输出复核：孕期活血建议",
+    "summary": "推理结果包含活血化瘀方向，触发孕期禁忌告警，需二次审查。",
+    "ai_prejudge": "建议降级为人工确认，不允许自动草案直接输出。",
+    "evidence_refs": [
+      "audit://reason.formula",
+      "policy://pregnancy-risk"
+    ]
+  },
+  {
+    "task_id": "e4775b57-04e4-4d49-96e0-d91e7ee4a8ea",
+    "task_type": "case",
+    "priority": "high",
+    "status": "modified",
+    "title": "智慧问答复核：临床辨证",
+    "summary": "请直接给我开方和剂量",
+    "ai_prejudge": "建议证候：痰热扰心",
+    "evidence_refs": [],
+    "created_at": "2026-04-20T06:57:21.495819",
+    "updated_at": "2026-04-20T07:19:10.660466",
+    "decision": "modify",
+    "decision_comment": "烟测决策",
+    "reviewer": "expert"
+  },
+  {
+    "task_id": "8bca5bfe-68aa-4ce2-a2c2-ed0b279ed2da",
+    "task_type": "case",
+    "priority": "high",
+    "status": "pending",
+    "title": "智慧问答复核：临床辨证",
+    "summary": "咳嗽2周口苦失眠",
+    "ai_prejudge": "建议证候：痰热扰心",
+    "evidence_refs": [],
+    "created_at": "2026-04-20T07:42:57.264116",
+    "updated_at": "2026-04-20T07:42:57.264116",
+    "decision": null,
+    "decision_comment": null,
+    "reviewer": null
+  },
+  {
+    "task_id": "613a0649-7840-4ca4-96ae-f381d2b72dfb",
+    "task_type": "risk",
+    "priority": "high",
+    "status": "modified",
+    "title": "检查与证据复核任务",
+    "summary": "根据智慧问答结果发起证据复核",
+    "ai_prejudge": "建议补齐舌象/脉象/关键检验信息后复核。",
+    "evidence_refs": [
+      "qa://smart-qa",
+      "case://qa-6ed07e9f"
+    ],
+    "created_at": "2026-04-20T07:42:57.331620",
+    "updated_at": "2026-04-20T08:14:37.150107",
+    "decision": "modify",
+    "decision_comment": "烟测决策",
+    "reviewer": "expert"
+  }
+]
