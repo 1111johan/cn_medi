@@ -25,24 +25,33 @@ function badgeClassByStatus(status) {
 
 function resolveApiUrl(url) {
   const rawBase = String(window.__TCM_API_BASE__ || "").trim();
-  if (/^https?:\/\//i.test(String(url))) {
+  const value = String(url);
+
+  if (/^https?:\/\//i.test(value)) {
     return url;
   }
 
-  // Dev fallback: when page is served by Vite (127.0.0.1:5173) and no explicit API base is set,
-  // call backend API directly to avoid 404 on Vite static routes.
-  if (!rawBase && /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) && window.location.port === "5173") {
-    const suffix = String(url).startsWith("/") ? String(url) : `/${String(url)}`;
+  const suffix = value.startsWith("/") ? value : `/${value}`;
+  const isLocalHost = /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname);
+  const isBackendHost = isLocalHost && (window.location.port === "8000" || window.location.port === "");
+
+  if (rawBase) {
+    const base = rawBase.replace(/\/+$/, "");
+    return `${base}${suffix}`;
+  }
+
+  // Local static pages (Vite dev/preview) should call FastAPI directly.
+  if (isLocalHost && !isBackendHost) {
     return `http://127.0.0.1:8000${suffix}`;
   }
 
-  if (!rawBase) {
-    return url;
+  // FastAPI local pages are served on same origin.
+  if (isBackendHost) {
+    return suffix;
   }
 
-  const base = rawBase.replace(/\/+$/, "");
-  const suffix = String(url).startsWith("/") ? String(url) : `/${String(url)}`;
-  return `${base}${suffix}`;
+  // Production static deployment (Vercel): API is exposed under /api/*.
+  return `/api${suffix}`;
 }
 
 async function fetchJson(url, options = {}) {

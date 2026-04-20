@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -41,17 +41,28 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/web/static"), name="static")
 
-app.include_router(health_router)
-app.include_router(platform_router)
-app.include_router(knowledge_router)
-app.include_router(intake_router)
-app.include_router(perception_router)
-app.include_router(reason_router)
-app.include_router(research_router)
-app.include_router(smart_qa_router)
-app.include_router(review_router)
-app.include_router(document_router)
-app.include_router(feedback_router)
-app.include_router(governance_router)
+API_ROUTERS = [
+    health_router,
+    platform_router,
+    knowledge_router,
+    intake_router,
+    perception_router,
+    reason_router,
+    research_router,
+    smart_qa_router,
+    review_router,
+    document_router,
+    feedback_router,
+    governance_router,
+]
+
+for router in API_ROUTERS:
+    app.include_router(router)
+
+# Mirror API routes under /api/* for static deployments (Vercel/Netlify).
+api_prefixed_router = APIRouter(prefix="/api")
+for router in API_ROUTERS:
+    api_prefixed_router.include_router(router)
+app.include_router(api_prefixed_router)
 
 app.include_router(web_router)
