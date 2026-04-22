@@ -1,0 +1,20 @@
+{
+  "envId": "lung-4g441e9m7f055d4e",
+  "functions": [
+    {
+      "name": "tcm-api",
+      "dir": "./cloudbase/functions/tcm-api-build",
+      "type": "HTTP",
+      "runtime": "Python3.10",
+      "timeout": 60,
+      "memorySize": 512,
+      "ignore": [
+        ".git",
+        "__pycache__",
+        "*.pyc",
+        "*.pyo",
+        "*.tmp"
+      ]
+    }
+  ]
+}

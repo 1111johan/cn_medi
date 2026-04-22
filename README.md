@@ -69,6 +69,19 @@ npm run build
 
 产物目录：`dist/`（根目录），可直接作为静态站点发布目录。
 
+CloudBase 动态 API（Python HTTP 云函数）：
+
+```bash
+python3 scripts/build_cloudbase_http_function.py
+bash scripts/deploy_cloudbase_api.sh lung-4g441e9m7f055d4e
+```
+
+说明：
+
+- 前端生产环境默认走同域 `"/api"`，见 `frontend/.env.production`
+- `scripts/deploy_cloudbase_api.sh` 会使用 `tcb fn deploy ... --httpFn --path /api`
+- 静态站点继续通过 `tcb hosting deploy` 发布到 `/cn-medic`
+
 如需指定专业中医数据库目录（默认读取项目同级目录下 `中医药`）：
 
 ```bash

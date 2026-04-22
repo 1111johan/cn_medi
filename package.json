@@ -6,8 +6,10 @@
     "frontend"
   ],
   "scripts": {
+    "export:static-api": "python3 scripts/export_static_api_snapshots.py || python scripts/export_static_api_snapshots.py",
+    "build:cloudbase-api": "python3 scripts/build_cloudbase_http_function.py || python scripts/build_cloudbase_http_function.py",
     "prebuild:frontend": "node -e \"process.exit(process.platform==='linux'&&process.arch==='x64'?0:1)\" && npm install --workspace frontend --no-save @rollup/rollup-linux-x64-gnu || true",
-    "build:frontend": "npm run build --workspace frontend",
+    "build:frontend": "npm run export:static-api && npm run build --workspace frontend",
     "build": "npm run build:frontend && rm -rf dist .vitepress/dist && mkdir -p .vitepress && cp -R frontend/dist ./dist && cp -R frontend/dist ./.vitepress/dist",
     "docs:build": "npm run build",
     "dev": "npm run dev --workspace frontend",

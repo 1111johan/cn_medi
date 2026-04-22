@@ -87,7 +87,7 @@ class ProfessionalKnowledgeService:
         return {
             "root_dir": str(self.root_dir),
             "db_path": str(self.db_path),
-            "available": self.root_dir.exists(),
+            "available": bool(self.root_dir.exists() or int(record_count) > 0),
             "record_count": int(record_count),
             "indexed_files": indexed_files,
             "indexed_at": indexed_at,
@@ -194,6 +194,17 @@ class ProfessionalKnowledgeService:
             with self._connect() as conn:
                 self._init_schema(conn)
                 stored_signature = self._meta_get(conn, "dataset_signature")
+                existing_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
+
+            if (
+                not force
+                and not self.root_dir.exists()
+                and self.db_path.exists()
+                and int(existing_count) > 0
+            ):
+                self._ready = True
+                self._last_check_at = time.time()
+                return
 
             if force or (not self.db_path.exists()) or (stored_signature != signature):
                 self._rebuild_index(files=files, signature=signature)

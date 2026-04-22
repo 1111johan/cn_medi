@@ -1,5 +1,7 @@
 const apiBase = (import.meta.env.VITE_API_BASE || "").trim();
 window.__TCM_API_BASE__ = apiBase;
+window.__TCM_STATIC_READONLY__ = Boolean(import.meta.env.PROD && !apiBase);
+window.__TCM_STATIC_DATA_ROOT__ = "/api-static";
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {

@@ -1,0 +1,3 @@
+#!/bin/bash
+export PYTHONPATH="./third_party:$PYTHONPATH"
+/var/lang/python310/bin/python3.10 app.py

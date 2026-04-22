@@ -12,6 +12,8 @@ venv/
 .DS_Store
 node_modules/
 frontend/node_modules/
+frontend/public/api-static/
 frontend/dist/
 dist/
 .vitepress/dist/
+cloudbase/functions/tcm-api-build/
