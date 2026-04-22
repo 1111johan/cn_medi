@@ -369,12 +369,22 @@ class SmartQAService:
         if topic_guarded:
             answer = "当前平台仅提供通用中医辨证、方药与科研问答，请改用症状、舌象、脉象、体质或方药问题继续咨询。"
             llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "topic_guard"}
-        elif faq_answer:
-            answer = faq_answer
-            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "faq_hit"}
         elif is_general_question:
-            answer = self._build_general_answer(clean_question)
-            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "general_guide"}
+            llm_result = self._generate_general_llm_answer(
+                question=clean_question,
+                scenario=resolved_scenario,
+                boundary=boundary,
+            )
+            if llm_result.get("ok"):
+                answer = llm_result.get("content", "")
+            elif faq_answer:
+                answer = faq_answer
+                if llm_result.get("error") in {"not_called", "", None}:
+                    llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "faq_hit"}
+            else:
+                answer = self._build_general_answer(clean_question)
+                if llm_result.get("error") in {"not_called", "", None}:
+                    llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "general_guide"}
         else:
             llm_result = self._generate_llm_answer(
                 question=clean_question,
@@ -529,6 +539,33 @@ class SmartQAService:
             "1. 先记录主诉、持续时间、诱因与加重/缓解因素；\n"
             "2. 再补充舌象（舌质/苔）与脉象；\n"
             "3. 最后由执业中医师面诊完成辨证与治法确认。"
+        )
+
+    def _generate_general_llm_answer(
+        self,
+        question: str,
+        scenario: str,
+        boundary: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        system_prompt = (
+            "你是中医智能体平台的通识问答助手。"
+            "请用中文输出，语气专业克制，不夸大、不替代医生。"
+            "必须按三个小节输出：\n"
+            "【初步判断】\n【原因说明】\n【下一步建议】"
+        )
+        user_prompt = (
+            f"场景：{scenario}\n"
+            f"用户问题：{question}\n"
+            f"边界状态：{'触发边界' if boundary.get('is_boundary') else '常规科普'}\n"
+            "要求：回答聚焦方法与步骤，不输出个体化诊断结论和具体处方剂量。"
+        )
+        return llm_gateway_service.chat(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.2,
+            max_tokens=420,
         )
 
     def _build_general_tasks(self) -> List[Dict[str, Any]]:
