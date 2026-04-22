@@ -363,6 +363,30 @@ def run() -> int:
         ),
     )
 
+    def t_smart_qa_general_task() -> None:
+        qa = _request(
+            "POST",
+            "/smart-qa/ask",
+            payload={"question": "中医如何判断体质？", "mode": "text"},
+        )
+        result = _request(
+            "POST",
+            "/smart-qa/task-execute",
+            payload={
+                "action": "open_intake_checklist",
+                "question": "中医如何判断体质？",
+                "scenario": qa.get("scenario", "科研传承"),
+                "case_id": case_id,
+                "extracted_fields": qa.get("extracted_fields", {}),
+                "result_cards": qa.get("result_cards", {}),
+                "evidences": qa.get("evidences", []),
+            },
+        )
+        _check(result.get("status") == "ok", "general task execute status not ok")
+        _check(result.get("task_status") == "pending", "general task should remain pending")
+
+    test("API POST /smart-qa/task-execute(general task)", t_smart_qa_general_task)
+
     def t_task_execute() -> None:
         qa = ctx.get("smart_qa_result", {})
         result = _request(
@@ -400,6 +424,24 @@ def run() -> int:
             "feedback submit not saved",
         ),
     )
+
+    def t_feedback_submit_invalid() -> None:
+        try:
+            _request(
+                "POST",
+                "/feedback/submit",
+                payload={
+                    "case_id": case_id,
+                    "actor": "doctor",
+                    "action": "totally_invalid",
+                },
+            )
+        except RuntimeError as exc:
+            _check("HTTP 422" in str(exc), "invalid feedback action should return 422")
+            return
+        raise RuntimeError("invalid feedback action unexpectedly succeeded")
+
+    test("API POST /feedback/submit(invalid action)", t_feedback_submit_invalid)
 
     test(
         "API POST /feedback/loop-action",

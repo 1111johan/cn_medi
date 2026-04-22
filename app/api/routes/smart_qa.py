@@ -104,7 +104,9 @@ def smart_qa_task_execute(payload: SmartQATaskExecuteRequest, request: Request) 
         "export_followup",
         "push_research",
         "fill_missing_fields",
+        "open_intake_checklist",
         "start_imaging_review",
+        "upload_materials",
     }:
         raise HTTPException(status_code=400, detail="invalid_action")
 
@@ -201,6 +203,27 @@ def smart_qa_task_execute(payload: SmartQATaskExecuteRequest, request: Request) 
             + ("、".join(missing_items) if missing_items else "舌象、脉象、病程、检查结果")
         )
         extra_payload = {"missing_items": missing_items}
+
+    elif action == "open_intake_checklist":
+        draft = "\n".join(
+            [
+                "【四诊采集清单】",
+                "1. 主诉与持续时间：何时开始、是否加重、诱因与缓解因素。",
+                "2. 伴随症状：睡眠、饮食、二便、寒热、情志、疼痛部位与性质。",
+                "3. 舌象与脉象：舌质、舌苔、脉象特征，可补充照片或门诊记录。",
+                "4. 检查资料：化验、影像、既往病历、既往用药与疗效反馈。",
+            ]
+        )
+        task_status = "pending"
+        message = "已生成四诊采集清单，请补齐后再次发起分析"
+
+    elif action == "upload_materials":
+        task_status = "pending"
+        message = "请补充上传舌象、病历或检查材料后再次发起分析"
+        extra_payload = {
+            "accepted_file_types": ["image", "document", "audio"],
+            "recommended_materials": ["舌象照片", "门诊病历", "化验或影像结果"],
+        }
 
     record_event(
         event_type="smart_qa.task_execute",

@@ -61,16 +61,15 @@ DIGITAL_HUMAN_TEX_NORMAL = os.getenv("DIGITAL_HUMAN_TEX_NORMAL", "texture_normal
 DIGITAL_HUMAN_TEX_ROUGHNESS = os.getenv("DIGITAL_HUMAN_TEX_ROUGHNESS", "texture_roughness.png")
 DIGITAL_HUMAN_TEX_METALLIC = os.getenv("DIGITAL_HUMAN_TEX_METALLIC", "texture_metallic.png")
 
-# Deployment fallback (hardcoded by request): keep DeepSeek available even when .env.local is not shipped.
+# Deployment defaults may point to DeepSeek, but credentials must come from env only.
 HARDCODED_PRIMARY_LLM_PROVIDER = "deepseek"
 HARDCODED_PRIMARY_LLM_MODEL = "deepseek-chat"
-HARDCODED_DEEPSEEK_API_KEY = "sk-a1f197d290464b628393418d52289f5a"
 
 PRIMARY_LLM_PROVIDER = os.getenv("PRIMARY_LLM_PROVIDER", HARDCODED_PRIMARY_LLM_PROVIDER)
 PRIMARY_LLM_MODEL = os.getenv("PRIMARY_LLM_MODEL", HARDCODED_PRIMARY_LLM_MODEL)
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "25"))
 
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", HARDCODED_DEEPSEEK_API_KEY)
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat")
 DEEPSEEK_BASE_URL_FALLBACK = os.getenv("DEEPSEEK_BASE_URL_FALLBACK", "https://api.deepseek.com/v1")

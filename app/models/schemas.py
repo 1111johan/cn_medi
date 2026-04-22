@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class KnowledgeIngestRequest(BaseModel):
@@ -202,6 +202,14 @@ class FeedbackSubmitRequest(BaseModel):
     comments: Optional[str] = None
     effectiveness: Optional[str] = None
     patched_formula: Optional[str] = None
+
+    @field_validator("action")
+    @classmethod
+    def normalize_action(cls, value: str) -> str:
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"accept", "modify", "reject"}:
+            raise ValueError("action must be accept | modify | reject")
+        return normalized
 
 
 class FeedbackSubmitResponse(BaseModel):
