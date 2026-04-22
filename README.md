@@ -60,6 +60,15 @@ VITE_API_BASE=https://your-api-domain.com
 
 > 说明：Vercel 会使用根目录 `vercel.json`，执行 `frontend` 的 Vite 构建并发布 `frontend/dist`。
 
+CloudBase / CNB 构建（根目录执行）：
+
+```bash
+npm install
+npm run build
+```
+
+产物目录：`dist/`（根目录），可直接作为静态站点发布目录。
+
 如需指定专业中医数据库目录（默认读取项目同级目录下 `中医药`）：
 
 ```bash

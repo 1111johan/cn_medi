@@ -1,0 +1,15 @@
+{
+  "name": "cn-medi-root",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "build:frontend": "npm run build --workspace frontend",
+    "build": "npm run build:frontend && rm -rf dist && cp -R frontend/dist ./dist",
+    "docs:build": "npm run build",
+    "dev": "npm run dev --workspace frontend",
+    "preview": "npm run preview --workspace frontend"
+  }
+}
