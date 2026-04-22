@@ -1,7 +1,7 @@
 const apiBase = (import.meta.env.VITE_API_BASE || "").trim();
 window.__TCM_API_BASE__ = apiBase;
 window.__TCM_STATIC_READONLY__ = Boolean(import.meta.env.PROD && !apiBase);
-window.__TCM_STATIC_DATA_ROOT__ = "/api-static";
+window.__TCM_STATIC_DATA_ROOT__ = "./api-static";
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -15,6 +15,6 @@ function loadScript(src) {
 }
 
 (async () => {
-  await loadScript("/static/js/common.js");
-  await loadScript("/static/js/smart_qa.js");
+  await loadScript("./static/js/common.js");
+  await loadScript("./static/js/smart_qa.js");
 })();

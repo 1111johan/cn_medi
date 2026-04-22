@@ -28,7 +28,7 @@ function isStaticReadonlyMode() {
 }
 
 function getStaticDataRoot() {
-  return String(window.__TCM_STATIC_DATA_ROOT__ || "/api-static").replace(/\/+$/, "");
+  return String(window.__TCM_STATIC_DATA_ROOT__ || "./api-static").replace(/\/+$/, "");
 }
 
 function normalizePathname(pathname) {
