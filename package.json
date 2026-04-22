@@ -6,6 +6,7 @@
     "frontend"
   ],
   "scripts": {
+    "prebuild:frontend": "node -e \"process.exit(process.platform==='linux'&&process.arch==='x64'?0:1)\" && npm install --workspace frontend --no-save @rollup/rollup-linux-x64-gnu || true",
     "build:frontend": "npm run build --workspace frontend",
     "build": "npm run build:frontend && rm -rf dist && cp -R frontend/dist ./dist",
     "docs:build": "npm run build",
