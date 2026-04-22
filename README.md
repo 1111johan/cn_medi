@@ -77,6 +77,19 @@ DEEPSEEK_API_KEY=sk-xxxx
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 ```
 
+VPN / 代理网络场景（可选）：
+
+```bash
+# 例如 Clash / V2Ray 本地代理端口
+DEEPSEEK_PROXY_URL=http://127.0.0.1:7890
+
+# 保证本地前后端联调不走代理
+NO_PROXY=127.0.0.1,localhost
+
+# 若 VPN 注入自签名证书导致 SSL 失败，可临时开启
+DEEPSEEK_DISABLE_SSL_VERIFY=1
+```
+
 启动后访问：
 
 - 平台首页：`http://127.0.0.1:8000/`

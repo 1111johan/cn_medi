@@ -221,5 +221,170 @@
       "case_id": "smoke-case-20260420161427-80884f"
     },
     "created_at": "2026-04-20T08:14:27.631358"
+  },
+  {
+    "object_id": "06b36715-0ff4-435e-987a-d8a365f0d3f6",
+    "source_type": "case",
+    "title": "烟测样例-20260421022538-c43fc4",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421022538-c43fc4"
+    },
+    "created_at": "2026-04-20T18:25:38.679480"
+  },
+  {
+    "object_id": "6730ed83-bad5-446f-8d11-07925c0c801f",
+    "source_type": "case",
+    "title": "烟测样例-20260421023540-58a035",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421023540-58a035"
+    },
+    "created_at": "2026-04-20T18:35:40.853533"
+  },
+  {
+    "object_id": "104185a6-16e4-428c-9f47-15de16193976",
+    "source_type": "case",
+    "title": "烟测样例-20260421023850-307e40",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421023850-307e40"
+    },
+    "created_at": "2026-04-20T18:38:50.328078"
+  },
+  {
+    "object_id": "ed06b5d5-b9f1-4495-98e1-0540ae27e1d5",
+    "source_type": "case",
+    "title": "烟测样例-20260421024400-c0bcb9",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421024400-c0bcb9"
+    },
+    "created_at": "2026-04-20T18:44:00.958223"
+  },
+  {
+    "object_id": "e407cfed-8704-44dc-b0dc-b0f411148f89",
+    "source_type": "case",
+    "title": "烟测样例-20260421024500-b62ef3",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421024500-b62ef3"
+    },
+    "created_at": "2026-04-20T18:45:01.976728"
+  },
+  {
+    "object_id": "d61cfb0c-af19-498e-a879-9694280c8c32",
+    "source_type": "case",
+    "title": "烟测样例-20260421025411-5b177c",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421025411-5b177c"
+    },
+    "created_at": "2026-04-20T18:54:11.227911"
+  },
+  {
+    "object_id": "2c69452e-1929-42fa-bdf4-b2ead6331085",
+    "source_type": "case",
+    "title": "烟测样例-20260421025751-e84640",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421025751-e84640"
+    },
+    "created_at": "2026-04-20T18:57:53.484544"
+  },
+  {
+    "object_id": "95b21147-4380-4148-bb05-f441205bb033",
+    "source_type": "case",
+    "title": "烟测样例-20260421031545-d90444",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421031545-d90444"
+    },
+    "created_at": "2026-04-20T19:15:45.441664"
+  },
+  {
+    "object_id": "3dc2697b-31c3-4628-98fa-3dfb3d9e91f8",
+    "source_type": "case",
+    "title": "烟测样例-20260421032703-74276c",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421032703-74276c"
+    },
+    "created_at": "2026-04-20T19:27:04.252610"
+  },
+  {
+    "object_id": "c795e77f-7c1e-4283-8f3a-74081d9e5504",
+    "source_type": "case",
+    "title": "烟测样例-20260421032937-b49b4c",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421032937-b49b4c"
+    },
+    "created_at": "2026-04-20T19:29:37.801412"
+  },
+  {
+    "object_id": "0d41b30c-c44b-47c7-940b-926e68f97645",
+    "source_type": "case",
+    "title": "烟测样例-20260421033958-58cfd6",
+    "content": "烟测：患者口苦心烦失眠，舌红苔黄腻，脉滑数，考虑痰热扰心。",
+    "tags": [
+      "烟测",
+      "痰热扰心"
+    ],
+    "metadata": {
+      "smoke": true,
+      "case_id": "smoke-case-20260421033958-58cfd6"
+    },
+    "created_at": "2026-04-20T19:39:58.270525"
   }
 ]

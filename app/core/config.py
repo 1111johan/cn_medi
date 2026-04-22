@@ -73,6 +73,15 @@ LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "25"))
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", HARDCODED_DEEPSEEK_API_KEY)
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat")
+DEEPSEEK_BASE_URL_FALLBACK = os.getenv("DEEPSEEK_BASE_URL_FALLBACK", "https://api.deepseek.com/v1")
+DEEPSEEK_PROXY_URL = os.getenv("DEEPSEEK_PROXY_URL", "")
+DEEPSEEK_DISABLE_SSL_VERIFY = os.getenv("DEEPSEEK_DISABLE_SSL_VERIFY", "0").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+DEEPSEEK_RETRY_TIMES = int(os.getenv("DEEPSEEK_RETRY_TIMES", "2"))
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
