@@ -4,6 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>智慧问答助手 - 岐衡中医智能体平台</title>
+  <script>
+    (function () {
+      var pathname = window.location.pathname || '/';
+      var basePath = pathname;
+      if (!basePath.endsWith('/')) {
+        var lastSegment = basePath.substring(basePath.lastIndexOf('/') + 1);
+        basePath = lastSegment.indexOf('.') >= 0
+          ? basePath.slice(0, basePath.lastIndexOf('/') + 1)
+          : basePath + '/';
+      }
+      var base = document.createElement('base');
+      base.href = basePath;
+      document.head.appendChild(base);
+      window.__TCM_PUBLIC_BASE__ = basePath;
+    })();
+  </script>
   <link rel="stylesheet" href="./static/css/styles.css">
 </head>
 <body>
