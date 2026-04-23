@@ -5,6 +5,7 @@ import hashlib
 import html as html_lib
 import os
 import re
+import shutil
 import sqlite3
 import threading
 import time
@@ -60,11 +61,8 @@ SUPPORTED_STRUCTURED_EXTENSIONS = {".csv"}
 SUPPORTED_HTML_EXTENSIONS = {".html", ".htm"}
 SUPPORTED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS | SUPPORTED_STRUCTURED_EXTENSIONS | SUPPORTED_HTML_EXTENSIONS
 
-DEFAULT_DB_PATH = (
-    BUNDLED_DATA_DIR / "professional_knowledge.db"
-    if (BUNDLED_DATA_DIR / "professional_knowledge.db").exists()
-    else DATA_DIR / "professional_knowledge.db"
-)
+DEFAULT_BUNDLED_DB_PATH = BUNDLED_DATA_DIR / "professional_knowledge.db"
+DEFAULT_RUNTIME_DB_PATH = DATA_DIR / "professional_knowledge.db"
 
 
 class ProfessionalKnowledgeService:
@@ -72,26 +70,38 @@ class ProfessionalKnowledgeService:
 
     def __init__(self, root_dir: Path, db_path: Path | None = None):
         self.root_dir = root_dir
-        self.db_path = db_path or Path(os.getenv("TCM_PRO_DB_PATH", str(DEFAULT_DB_PATH)))
+        self.packaged_db_path = Path(
+            os.getenv("TCM_PRO_PACKAGED_DB_PATH", str(DEFAULT_BUNDLED_DB_PATH))
+        ).resolve()
+        self.db_path = Path(
+            db_path or os.getenv("TCM_PRO_DB_PATH", str(DEFAULT_RUNTIME_DB_PATH))
+        ).resolve()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._lock = threading.Lock()
         self._ready = False
         self._last_check_at = 0.0
         self._check_interval_seconds = float(os.getenv("TCM_PRO_REBUILD_CHECK_SECONDS", "30"))
+        self._runtime_db_prepared = False
 
     def stats(self) -> Dict[str, Any]:
-        self._ensure_index_ready()
-        with self._connect() as conn:
-            record_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
-            signature = self._meta_get(conn, "dataset_signature")
-            indexed_at = self._meta_get(conn, "indexed_at")
-            indexed_files = int(self._meta_get(conn, "indexed_files") or "0")
+        try:
+            self._ensure_index_ready()
+            with self._connect() as conn:
+                record_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
+                signature = self._meta_get(conn, "dataset_signature")
+                indexed_at = self._meta_get(conn, "indexed_at")
+                indexed_files = int(self._meta_get(conn, "indexed_files") or "0")
+        except sqlite3.Error:
+            record_count = 0
+            signature = ""
+            indexed_at = ""
+            indexed_files = 0
 
         return {
             "root_dir": str(self.root_dir),
             "db_path": str(self.db_path),
-            "available": bool(self.root_dir.exists() or int(record_count) > 0),
+            "available": bool(self.root_dir.exists() or int(record_count) > 0 or self.packaged_db_path.exists()),
             "record_count": int(record_count),
             "indexed_files": indexed_files,
             "indexed_at": indexed_at,
@@ -103,9 +113,13 @@ class ProfessionalKnowledgeService:
         return self.stats()
 
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        self._ensure_index_ready()
         q = query.strip()
         if not q:
+            return []
+
+        try:
+            self._ensure_index_ready()
+        except sqlite3.Error:
             return []
 
         terms = self._extract_terms(q)
@@ -127,8 +141,11 @@ class ProfessionalKnowledgeService:
         params.append(max(top_k * 60, 180))
 
         results: List[Dict[str, Any]] = []
-        with self._connect() as conn:
-            rows = conn.execute(sql, params).fetchall()
+        try:
+            with self._connect() as conn:
+                rows = conn.execute(sql, params).fetchall()
+        except sqlite3.Error:
+            return []
 
         for row in rows:
             title = str(row["title"])
@@ -154,12 +171,15 @@ class ProfessionalKnowledgeService:
         return results[:top_k]
 
     def _fallback_search(self, query: str, top_k: int, terms: List[str]) -> List[Dict[str, Any]]:
-        with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT object_id, title, content, source_type, source_path "
-                "FROM professional_documents ORDER BY rowid DESC LIMIT ?",
-                (max(top_k * 25, 120),),
-            ).fetchall()
+        try:
+            with self._connect() as conn:
+                rows = conn.execute(
+                    "SELECT object_id, title, content, source_type, source_path "
+                    "FROM professional_documents ORDER BY rowid DESC LIMIT ?",
+                    (max(top_k * 25, 120),),
+                ).fetchall()
+        except sqlite3.Error:
+            return []
 
         results: List[Dict[str, Any]] = []
         for row in rows:
@@ -188,6 +208,8 @@ class ProfessionalKnowledgeService:
             return
 
         with self._lock:
+            self._prepare_runtime_db(force=force)
+
             now = time.time()
             if not force and self._ready and (now - self._last_check_at) < self._check_interval_seconds:
                 return
@@ -400,10 +422,16 @@ class ProfessionalKnowledgeService:
         ]
 
     def _connect(self) -> sqlite3.Connection:
-        if self.db_path.exists() and not self._can_write_db():
-            conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
+        self._prepare_runtime_db()
+
+        target_path = self.db_path
+        if not target_path.exists() and self.packaged_db_path.exists():
+            target_path = self.packaged_db_path
+
+        if target_path.exists() and not self._can_write_path(target_path):
+            conn = sqlite3.connect(f"file:{target_path}?mode=ro&immutable=1", uri=True)
         else:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(target_path)
             conn.execute("PRAGMA journal_mode = WAL")
             conn.execute("PRAGMA synchronous = NORMAL")
         conn.row_factory = sqlite3.Row
@@ -411,9 +439,40 @@ class ProfessionalKnowledgeService:
         return conn
 
     def _can_write_db(self) -> bool:
-        if self.db_path.exists():
-            return os.access(self.db_path, os.W_OK)
-        return os.access(self.db_path.parent, os.W_OK)
+        return self._can_write_path(self.db_path)
+
+    def _can_write_path(self, path: Path) -> bool:
+        if path.exists():
+            return os.access(path, os.W_OK)
+        return os.access(path.parent, os.W_OK)
+
+    def _prepare_runtime_db(self, force: bool = False) -> None:
+        if self._runtime_db_prepared and not force:
+            return
+        if self.db_path == self.packaged_db_path:
+            self._runtime_db_prepared = True
+            return
+        if self.db_path.exists() and not force:
+            self._runtime_db_prepared = True
+            return
+        if not self.packaged_db_path.exists():
+            self._runtime_db_prepared = True
+            return
+
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        source_prefix = str(self.packaged_db_path)
+        target_prefix = str(self.db_path)
+        for suffix in ("", "-wal", "-shm"):
+            src = Path(f"{source_prefix}{suffix}")
+            dst = Path(f"{target_prefix}{suffix}")
+            if not src.exists():
+                continue
+            if dst.exists():
+                dst.unlink()
+            shutil.copy2(src, dst)
+
+        self._runtime_db_prepared = True
 
     def _init_schema(self, conn: sqlite3.Connection) -> None:
         conn.execute(
