@@ -117,6 +117,74 @@ function appendMessage(role, content, meta = "") {
   chatStream.scrollTop = chatStream.scrollHeight;
 }
 
+function flashActionButton(button, text) {
+  if (!button) return;
+  const originalText = button.textContent;
+  button.textContent = text;
+  window.setTimeout(() => {
+    button.textContent = originalText;
+  }, 1200);
+}
+
+function attachAssistantActions(result) {
+  if (!chatStream || !result) return;
+  const list = chatStream.querySelectorAll(".chat-message.assistant");
+  const target = list[list.length - 1];
+  if (!target) return;
+
+  target.querySelector(".chat-actions")?.remove();
+
+  const actionsNode = document.createElement("div");
+  actionsNode.className = "chat-actions answer-actions";
+
+  const buttons = [
+    { label: "查看结果", kind: "primary", onClick: () => switchTab("results") },
+    {
+      label: "查看依据",
+      kind: "secondary",
+      disabled: !(result.evidences || []).length,
+      onClick: () => switchTab("evidence"),
+    },
+    {
+      label: "复制回答",
+      kind: "secondary",
+      onClick: async (button) => {
+        const answer = String(result.answer || "").trim();
+        if (!answer) return;
+        try {
+          await navigator.clipboard.writeText(answer);
+          flashActionButton(button, "已复制");
+        } catch (error) {
+          flashActionButton(button, "复制失败");
+        }
+      },
+    },
+    {
+      label: "继续追问",
+      kind: "ghost",
+      onClick: () => {
+        switchTab("results");
+        questionInput?.focus();
+      },
+    },
+  ];
+
+  buttons.forEach((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `answer-action-btn ${item.kind || "secondary"}`;
+    button.textContent = item.label;
+    if (item.disabled) {
+      button.disabled = true;
+    }
+    button.addEventListener("click", () => item.onClick(button));
+    actionsNode.appendChild(button);
+  });
+
+  target.appendChild(actionsNode);
+  chatStream.scrollTop = chatStream.scrollHeight;
+}
+
 function replaceLastAssistant(content) {
   if (!chatStream) return;
   const list = chatStream.querySelectorAll(".chat-message.assistant");
@@ -291,7 +359,7 @@ function renderTasksPanel(result) {
           <span class="badge ${item.status === "urgent" ? "risk" : item.status === "pending" ? "watch" : "ok"}">${window.tcmApi.escapeHtml(item.priority || "P1")}</span>
         </div>
         <p>${window.tcmApi.escapeHtml(item.detail || "")}</p>
-        <button type="button" class="mini-icon-btn execute-task-btn" data-action="${window.tcmApi.escapeHtml(item.action || "open")}">执行：${window.tcmApi.escapeHtml(item.action || "open")}</button>
+        <button type="button" class="execute-task-btn task-action-btn" data-action="${window.tcmApi.escapeHtml(item.action || "open")}">执行：${window.tcmApi.escapeHtml(item.action || "open")}</button>
       </div>
     `
     )
@@ -539,6 +607,7 @@ function bindEvents() {
       latestResult = result;
 
       replaceLastAssistant(result.answer || "");
+      attachAssistantActions(result);
       renderConversationMeta(result);
       updateTranscript(result.extracted_fields || {});
 
