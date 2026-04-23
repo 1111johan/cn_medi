@@ -92,7 +92,7 @@ class ProfessionalKnowledgeService:
                 signature = self._meta_get(conn, "dataset_signature")
                 indexed_at = self._meta_get(conn, "indexed_at")
                 indexed_files = int(self._meta_get(conn, "indexed_files") or "0")
-        except sqlite3.Error:
+        except (OSError, sqlite3.Error):
             record_count = 0
             signature = ""
             indexed_at = ""
@@ -119,7 +119,7 @@ class ProfessionalKnowledgeService:
 
         try:
             self._ensure_index_ready()
-        except sqlite3.Error:
+        except (OSError, sqlite3.Error):
             return []
 
         terms = self._extract_terms(q)
@@ -144,7 +144,7 @@ class ProfessionalKnowledgeService:
         try:
             with self._connect() as conn:
                 rows = conn.execute(sql, params).fetchall()
-        except sqlite3.Error:
+        except (OSError, sqlite3.Error):
             return []
 
         for row in rows:
@@ -178,7 +178,7 @@ class ProfessionalKnowledgeService:
                     "FROM professional_documents ORDER BY rowid DESC LIMIT ?",
                     (max(top_k * 25, 120),),
                 ).fetchall()
-        except sqlite3.Error:
+        except (OSError, sqlite3.Error):
             return []
 
         results: List[Dict[str, Any]] = []
@@ -459,18 +459,22 @@ class ProfessionalKnowledgeService:
             self._runtime_db_prepared = True
             return
 
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        source_prefix = str(self.packaged_db_path)
-        target_prefix = str(self.db_path)
-        for suffix in ("", "-wal", "-shm"):
-            src = Path(f"{source_prefix}{suffix}")
-            dst = Path(f"{target_prefix}{suffix}")
-            if not src.exists():
-                continue
-            if dst.exists():
-                dst.unlink()
-            shutil.copy2(src, dst)
+            source_prefix = str(self.packaged_db_path)
+            target_prefix = str(self.db_path)
+            for suffix in ("", "-wal", "-shm"):
+                src = Path(f"{source_prefix}{suffix}")
+                dst = Path(f"{target_prefix}{suffix}")
+                if not src.exists():
+                    continue
+                if dst.exists():
+                    dst.unlink()
+                shutil.copy2(src, dst)
+        except OSError:
+            # Fall back to the bundled database if the runtime copy cannot be prepared.
+            pass
 
         self._runtime_db_prepared = True
 
