@@ -1874,3 +1874,170 @@ select:focus {
     font-size: 1.26rem;
   }
 }
+
+.clinical-hero-stats {
+  min-width: 280px;
+}
+
+.section-head-inline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.section-head-inline h3,
+.clinical-panel-block h4 {
+  margin-bottom: 0.4rem;
+}
+
+.clinical-demo-layout {
+  display: grid;
+  grid-template-columns: 0.95fr 1.35fr 1.05fr;
+  gap: 1rem;
+}
+
+.clinical-left-column,
+.clinical-middle-column,
+.clinical-right-column {
+  min-height: 100%;
+}
+
+.patient-summary-card,
+.comparison-card {
+  border: 1px solid #d8cdbd;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.8rem;
+}
+
+.patient-summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.patient-summary-head h4 {
+  margin: 0;
+}
+
+.patient-summary-head p {
+  margin: 0.2rem 0 0;
+  color: #6e6255;
+  font-size: 0.82rem;
+}
+
+.patient-summary-grid,
+.compare-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.8rem;
+}
+
+.patient-summary-grid div,
+.compare-grid div,
+.clinical-metric-card {
+  border: 1px solid #e2d8ca;
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: rgba(248, 244, 236, 0.88);
+}
+
+.patient-summary-grid span,
+.compare-grid span,
+.clinical-metric-card span {
+  display: block;
+  font-size: 0.77rem;
+  color: #726556;
+  margin-bottom: 0.2rem;
+}
+
+.patient-summary-grid strong,
+.compare-grid strong,
+.clinical-metric-card strong {
+  display: block;
+  line-height: 1.45;
+}
+
+.clinical-panel-block {
+  margin-top: 1rem;
+}
+
+.clinical-grid-cards {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clinical-split-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clinical-topn-card {
+  border: 1px solid #dccfbe;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.78rem;
+}
+
+.clinical-topn-card.is-top {
+  border-color: #a5cbb2;
+  background: linear-gradient(180deg, rgba(236, 247, 240, 0.94), rgba(255, 255, 255, 0.88));
+}
+
+.clinical-topn-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.clinical-topn-card p {
+  margin: 0.25rem 0 0;
+  color: #605547;
+  font-size: 0.83rem;
+  line-height: 1.48;
+}
+
+.empty-panel {
+  min-height: 5rem;
+}
+
+.empty-state-text {
+  color: #72675a;
+  font-size: 0.84rem;
+  line-height: 1.54;
+}
+
+#clinical-patient-list .queue-item {
+  display: grid;
+  gap: 0.22rem;
+}
+
+#clinical-patient-list .queue-item strong {
+  font-size: 0.88rem;
+}
+
+#clinical-patient-list .queue-item span {
+  font-size: 0.78rem;
+  color: #6c6054;
+}
+
+@media (max-width: 1200px) {
+  .clinical-demo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .clinical-split-grid,
+  .patient-summary-grid,
+  .compare-grid,
+  .clinical-grid-cards {
+    grid-template-columns: 1fr;
+  }
+}

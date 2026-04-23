@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.document import router as document_router
+from app.api.routes.clinical import router as clinical_router
 from app.api.routes.feedback import router as feedback_router
 from app.api.routes.governance import router as governance_router
 from app.api.routes.health import router as health_router
@@ -52,6 +53,7 @@ API_ROUTERS = [
     smart_qa_router,
     review_router,
     document_router,
+    clinical_router,
     feedback_router,
     governance_router,
 ]

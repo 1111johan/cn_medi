@@ -39,9 +39,9 @@
           <input id="global-search" type="text" placeholder="全局搜索：证候 / 方剂 / 医案 / 问答 / 规则 / 审计">
         </label>
         <div class="status-chip-group" id="global-status">
-          <span class="status-chip">模型版本：MVP-0.2</span>
+          <span class="status-chip">模型版本：MVP-0.3</span>
           <span class="status-chip">机构：示例机构</span>
-          <span class="status-chip">角色：平台管理员</span>
+          <span class="status-chip">角色：门诊医生</span>
           <span class="status-chip" id="api-health-chip">API: checking</span>
         </div>
       </div>
@@ -61,166 +61,210 @@
   </header>
 
   <main class="container">
-    <section class="hero card">
-  <div>
-    <p class="section-kicker">Clinical Workbench</p>
-    <h2 class="hero-title">临床智能辅助工作台</h2>
-    <p class="hero-text">按方案要求对齐“患者队列-四诊证据-证候推理-方药草案-文书协作-反馈回流”六步闭环。</p>
-  </div>
-  <div class="hero-right">
-    <div class="mini-stat"><span>待补问</span><strong>3</strong></div>
-    <div class="mini-stat"><span>待复核</span><strong>2</strong></div>
-    <div class="mini-stat"><span>待随访</span><strong>4</strong></div>
-  </div>
-</section>
+    <section class="hero card clinical-hero">
+      <div>
+        <p class="section-kicker">Clinical Decision Support Demo</p>
+        <h2 class="hero-title">临床辅助闭环工作台</h2>
+        <p class="hero-text">围绕“选患者 → 输入四诊 → 结构化辨证 → 规则与证据解释 → 方药草案 → 医生修订 → 回写病历”构建单页演示闭环。</p>
+      </div>
+      <div class="hero-right clinical-hero-stats">
+        <div class="mini-stat"><span>分析模式</span><strong>Clinical-RAG-NSFR</strong></div>
+        <div class="mini-stat"><span>解释层</span><strong>规则 + 专业库</strong></div>
+        <div class="mini-stat"><span>回写动作</span><strong>病历 / 审计 / 反馈</strong></div>
+      </div>
+    </section>
 
-<section class="clinical-layout">
-  <article class="card">
-    <h3>患者队列</h3>
-    <div class="queue-list">
-      <button class="queue-item active" data-case="case-20260419-001">王某某 · 复诊 · 胸闷痰多</button>
-      <button class="queue-item" data-case="case-20260419-002">刘某 · 初诊 · 乏力失眠</button>
-      <button class="queue-item" data-case="case-20260419-003">陈某 · 复诊 · 纳差便溏</button>
-      <button class="queue-item" data-case="case-20260419-004">孙某 · 随访 · 调方评估</button>
-    </div>
+    <section class="clinical-demo-layout">
+      <article class="card clinical-left-column">
+        <div class="section-head-inline">
+          <div>
+            <p class="section-kicker">Patient Intake</p>
+            <h3>患者与输入区</h3>
+          </div>
+          <span class="status-chip" id="clinical-mode-chip">临床辅助 demo</span>
+        </div>
 
-    <h3 class="top-gap">闭环进度</h3>
-    <ul class="checkpoint-list" id="clinical-checkpoints">
-      <li data-step="intake">① 四诊结构化</li>
-      <li data-step="syndrome">② 证候排序</li>
-      <li data-step="formula">③ 方药草案</li>
-      <li data-step="document">④ 文书草稿</li>
-      <li data-step="feedback">⑤ 反馈回流</li>
-    </ul>
+        <div id="clinical-patient-list" class="queue-list"></div>
 
-    <h3 class="top-gap">风险提示</h3>
-    <div class="risk-box" id="clinical-risks">暂未触发风险提示。</div>
-  </article>
+        <div class="patient-summary-card top-gap" id="clinical-patient-card">
+          <div class="empty-state-text">请选择左侧患者，或直接录入新病例。</div>
+        </div>
 
-  <article class="card">
-    <h3>四诊证据区</h3>
-    <form id="intake-form" class="form-grid">
-      <label class="full">
-        接诊文本
-        <textarea name="raw_text" rows="5" placeholder="示例：女，45岁，乏力伴胸闷2月，纳差、痰多，舌淡胖苔白腻，脉濡。" required></textarea>
-      </label>
-      <button type="submit" class="btn">解析结构化字段</button>
-    </form>
-    <div class="result-box" id="intake-result-box">等待结构化解析。</div>
+        <form id="clinical-demo-form" class="form-grid top-gap">
+          <input type="hidden" name="case_id">
+          <input type="hidden" name="patient_id">
+          <input type="hidden" name="name">
+          <input type="hidden" name="gender">
+          <input type="hidden" name="age">
+          <input type="hidden" name="department">
+          <input type="hidden" name="visit_type">
+          <input type="hidden" name="visit_time">
 
-    <h3 class="top-gap">智能辨证区（Top-N）</h3>
-    <form id="syndrome-form" class="form-grid">
-      <label>
-        症状（逗号分隔）
-        <input type="text" name="symptoms" placeholder="乏力, 胸闷, 痰多" required>
-      </label>
-      <label>
-        舌象标签
-        <input type="text" name="tongue_tags" placeholder="舌淡胖, 苔白腻">
-      </label>
-      <label>
-        脉象标签
-        <input type="text" name="pulse_tags" placeholder="脉濡, 脉涩">
-      </label>
-      <button type="submit" class="btn">执行证候推理</button>
-    </form>
-    <div class="result-box" id="syndrome-result-box">等待证候推理。</div>
+          <label class="full">
+            主诉
+            <textarea name="chief_complaint" rows="2" placeholder="如：失眠2周，伴心烦口干" required></textarea>
+          </label>
+          <label class="full">
+            现病史摘要
+            <textarea name="present_illness" rows="4" placeholder="如：近2周入睡困难，多梦易醒，夜间烦躁，晨起口干。"></textarea>
+          </label>
+          <label>
+            舌象
+            <input type="text" name="tongue" placeholder="舌红，苔黄腻">
+          </label>
+          <label>
+            脉象
+            <input type="text" name="pulse" placeholder="滑数">
+          </label>
+          <label class="full">
+            伴随症状（逗号分隔）
+            <input type="text" name="symptoms" placeholder="失眠, 心烦, 口干">
+          </label>
+          <label class="full">
+            检查结果
+            <textarea name="exam_results" rows="2" placeholder="如：常规检查未见明显异常"></textarea>
+          </label>
+          <label class="full">
+            既往史
+            <textarea name="past_history" rows="2" placeholder="如：糖尿病5年 / 妊娠中 / 否认重大慢病史"></textarea>
+          </label>
+          <button type="submit" class="btn full">开始辨证分析</button>
+        </form>
 
-    <h3 class="top-gap">神经符号推理面板</h3>
-    <div class="stack-list" id="trace-step-list">
-      <div class="result-box">执行证候推理后展示“检索命中-规则打分-候选排除-人工确认”链路。</div>
-    </div>
-  </article>
+        <div class="top-gap">
+          <h3>闭环进度</h3>
+          <ul class="checkpoint-list" id="clinical-checkpoints">
+            <li data-step="patient">① 选择患者</li>
+            <li data-step="intake">② 输入四诊</li>
+            <li data-step="analysis">③ AI 辨证分析</li>
+            <li data-step="review">④ 医生修订</li>
+            <li data-step="writeback">⑤ 回写闭环</li>
+          </ul>
+        </div>
+      </article>
 
-  <article class="card">
-    <h3>方药协作区</h3>
-    <form id="formula-form" class="form-grid">
-      <label>
-        证候
-        <input type="text" name="syndrome" placeholder="如：脾虚痰瘀" required>
-      </label>
-      <label>
-        禁忌（逗号分隔）
-        <input type="text" name="contraindications" placeholder="孕期, 药物过敏">
-      </label>
-      <button type="submit" class="btn">生成方药草案</button>
-    </form>
-    <div class="result-box" id="formula-result-box">等待方药草案。</div>
+      <article class="card clinical-middle-column">
+        <div class="section-head-inline">
+          <div>
+            <p class="section-kicker">AI Reasoning</p>
+            <h3>AI 辨证分析结果区</h3>
+          </div>
+          <span class="status-chip" id="clinical-top-syndrome-chip">等待分析</span>
+        </div>
 
-    <h3 class="top-gap">病历与处方协作区</h3>
-    <form id="draft-form" class="form-grid">
-      <label>
-        患者姓名
-        <input type="text" name="name" value="测试患者">
-      </label>
-      <label>
-        主诉
-        <input type="text" name="chief_complaint" value="乏力、痰多">
-      </label>
-      <label>
-        证候
-        <input type="text" name="syndrome" value="脾虚痰瘀">
-      </label>
-      <label>
-        治法
-        <input type="text" name="therapy" value="健脾化痰，活血化瘀">
-      </label>
-      <label class="full">
-        方药
-        <input type="text" name="formula" value="六君子汤合桃红四物汤加减">
-      </label>
-      <button type="submit" class="btn">生成病历草稿</button>
-    </form>
-    <pre class="result" id="draft-result"></pre>
+        <section class="clinical-panel-block">
+          <h4>结构化结果</h4>
+          <div id="clinical-structured-panel" class="clinical-grid-cards empty-panel">
+            <div class="empty-state-text">提交病例后展示结构化医学信息。</div>
+          </div>
+        </section>
 
-    <form id="feedback-form" class="form-grid top-gap">
-      <label>
-        案例ID
-        <input type="text" name="case_id" value="case-20260419-001" required>
-      </label>
-      <label>
-        反馈动作
-        <select name="action">
-          <option value="accept">accept</option>
-          <option value="modify">modify</option>
-          <option value="reject">reject</option>
-        </select>
-      </label>
-      <label class="full">
-        备注
-        <input type="text" name="comments" placeholder="医生修改意见或疗效说明">
-      </label>
-      <button type="submit" class="btn secondary">提交反馈回流</button>
-    </form>
-    <pre class="result" id="feedback-result"></pre>
+        <section class="clinical-panel-block">
+          <h4>Top-N 证候排序</h4>
+          <div id="clinical-topn-panel" class="stack-list empty-panel">
+            <div class="empty-state-text">等待证候排序。</div>
+          </div>
+        </section>
 
-    <h3 class="top-gap">闭环动作中心</h3>
-    <form id="loop-action-form" class="form-grid">
-      <label>
-        案例ID
-        <input type="text" name="case_id" value="case-20260419-001" required>
-      </label>
-      <label>
-        动作
-        <select name="action">
-          <option value="consult">发起会诊</option>
-          <option value="add_teaching_case">加入教学案例</option>
-          <option value="add_rule">加入规则库</option>
-          <option value="add_retrain_sample">进入再训练样本池</option>
-        </select>
-      </label>
-      <label class="full">
-        说明
-        <input type="text" name="comment" placeholder="填写触发原因、证据或预期结果">
-      </label>
-      <button type="submit" class="btn secondary">提交闭环动作</button>
-    </form>
-    <pre class="result" id="loop-action-result"></pre>
-  </article>
-</section>
+        <section class="clinical-panel-block clinical-split-grid">
+          <div>
+            <h4>规则命中</h4>
+            <div id="clinical-rules-panel" class="stack-list empty-panel">
+              <div class="empty-state-text">等待规则解释。</div>
+            </div>
+          </div>
+          <div>
+            <h4>证据引用</h4>
+            <div id="clinical-evidence-panel" class="stack-list empty-panel">
+              <div class="empty-state-text">等待证据卡片。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="clinical-panel-block clinical-split-grid">
+          <div>
+            <h4>方药草案</h4>
+            <div id="clinical-formula-panel" class="result-box">等待方药草案。</div>
+          </div>
+          <div>
+            <h4>风险提示</h4>
+            <div id="clinical-risk-panel" class="risk-box">暂未触发风险提示。</div>
+          </div>
+        </section>
+
+        <section class="clinical-panel-block">
+          <h4>推理链摘要</h4>
+          <div id="clinical-trace-panel" class="stack-list empty-panel">
+            <div class="empty-state-text">等待推理链摘要。</div>
+          </div>
+        </section>
+      </article>
+
+      <article class="card clinical-right-column">
+        <div class="section-head-inline">
+          <div>
+            <p class="section-kicker">Doctor Review</p>
+            <h3>人工干预与回写区</h3>
+          </div>
+          <span class="status-chip" id="clinical-adopt-chip">医生主导</span>
+        </div>
+
+        <div class="comparison-card" id="clinical-compare-box">
+          <div class="empty-state-text">分析完成后展示 AI 推荐与医生最终确认的差异。</div>
+        </div>
+
+        <form id="clinical-commit-form" class="form-grid top-gap">
+          <input type="hidden" name="case_id">
+          <input type="hidden" name="patient_id">
+          <input type="hidden" name="patient_name">
+          <input type="hidden" name="gender">
+          <input type="hidden" name="age">
+          <input type="hidden" name="chief_complaint">
+          <input type="hidden" name="present_illness">
+          <input type="hidden" name="tongue">
+          <input type="hidden" name="pulse">
+          <input type="hidden" name="ai_top_syndrome">
+
+          <label>
+            最终证候
+            <input type="text" name="final_syndrome" placeholder="待分析后自动填入" required>
+          </label>
+          <label>
+            是否采纳 AI
+            <select name="adopt_ai">
+              <option value="true">采纳</option>
+              <option value="false">人工修改</option>
+            </select>
+          </label>
+          <label class="full">
+            最终治法
+            <input type="text" name="final_therapy" placeholder="待分析后自动填入" required>
+          </label>
+          <label class="full">
+            最终方药
+            <textarea name="final_formula" rows="4" placeholder="待分析后自动填入" required></textarea>
+          </label>
+          <label class="full">
+            修改备注 / 风险说明
+            <textarea name="doctor_notes" rows="4" placeholder="如：AI 推荐痰热扰心，结合情志因素调整为肝郁化火兼痰热内扰。"></textarea>
+          </label>
+          <button type="submit" class="btn full">确认并回写病历</button>
+        </form>
+
+        <section class="clinical-panel-block top-gap">
+          <h4>病历草稿</h4>
+          <pre id="clinical-draft-result" class="result">确认回写后生成病历草稿。</pre>
+        </section>
+
+        <section class="clinical-panel-block">
+          <h4>闭环记录</h4>
+          <div id="clinical-writeback-result" class="result-box">等待医生确认与回写。</div>
+        </section>
+      </article>
+    </section>
   </main>
 
-  <footer class="footer">岐衡中医智能体平台 · 平台版 MVP · 知识中台 + 推理中台 + 三场景 + 治理闭环</footer>
+  <footer class="footer">岐衡中医智能体平台 · 临床辅助闭环 Demo · 结构化辨证 + 可解释推理 + 医生回写</footer>
   <script src="./static/js/common.js"></script>
   <script src="./static/js/clinical.js"></script>
 </body>

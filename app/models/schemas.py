@@ -220,6 +220,93 @@ class FeedbackSubmitResponse(BaseModel):
     status: str
 
 
+class ClinicalDemoAnalyzeRequest(BaseModel):
+    case_id: Optional[str] = None
+    patient_id: Optional[str] = None
+    name: str = ""
+    gender: str = ""
+    age: Optional[int] = None
+    department: str = "中医内科"
+    visit_type: str = "初诊"
+    visit_time: str = ""
+    chief_complaint: str
+    present_illness: str = ""
+    tongue: str = ""
+    pulse: str = ""
+    symptoms: List[str] = Field(default_factory=list)
+    exam_results: str = ""
+    past_history: str = ""
+
+
+class ClinicalTopSyndrome(BaseModel):
+    name: str
+    score: float
+    support_evidence: List[str] = Field(default_factory=list)
+    counter_evidence: List[str] = Field(default_factory=list)
+
+
+class ClinicalRuleHit(BaseModel):
+    rule_id: str
+    rule_name: str
+    matched_evidence: List[str] = Field(default_factory=list)
+
+
+class ClinicalEvidenceRef(BaseModel):
+    source: str
+    support_point: str
+    quote: str
+
+
+class ClinicalFormulaDraft(BaseModel):
+    principle: str
+    formula: str
+    modifications: List[str] = Field(default_factory=list)
+    note: str = ""
+
+
+class ClinicalDemoAnalyzeResponse(BaseModel):
+    case_id: str
+    patient_id: str
+    patient_card: Dict[str, Any] = Field(default_factory=dict)
+    input_summary: Dict[str, Any] = Field(default_factory=dict)
+    structured_features: Dict[str, Any] = Field(default_factory=dict)
+    top_syndromes: List[ClinicalTopSyndrome] = Field(default_factory=list)
+    rule_hits: List[ClinicalRuleHit] = Field(default_factory=list)
+    evidence_refs: List[ClinicalEvidenceRef] = Field(default_factory=list)
+    formula_draft: ClinicalFormulaDraft
+    risk_alerts: List[str] = Field(default_factory=list)
+    trace_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    doctor_defaults: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ClinicalDemoCommitRequest(BaseModel):
+    case_id: str
+    patient_id: str
+    patient_name: str
+    gender: Optional[str] = None
+    age: Optional[int] = None
+    chief_complaint: str
+    present_illness: str = ""
+    tongue: str = ""
+    pulse: str = ""
+    ai_top_syndrome: str = ""
+    final_syndrome: str
+    final_therapy: str
+    final_formula: str
+    doctor_notes: str = ""
+    adopt_ai: bool = True
+
+
+class ClinicalDemoCommitResponse(BaseModel):
+    status: str
+    case_id: str
+    feedback_id: str
+    audit_id: str
+    writeback_message: str
+    draft: str
+    action: str
+
+
 class LoopActionRequest(BaseModel):
     case_id: str
     action: str = Field(..., description="consult | add_teaching_case | add_rule | add_retrain_sample")
