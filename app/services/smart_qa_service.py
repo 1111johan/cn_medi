@@ -205,7 +205,24 @@ SYMPTOM_TERMS = [
     "便溏",
     "胸痛",
     "心悸",
+    "口渴",
+    "喜冷饮",
+    "喜热饮",
+    "大便干",
+    "小便黄",
 ]
+
+SYMPTOM_ALIASES: Dict[str, str] = {
+    "嘴巴很干": "口干",
+    "嘴巴干": "口干",
+    "口燥": "口干",
+    "咽干": "口干",
+    "很渴": "口渴",
+    "总想喝水": "口渴",
+    "大便干结": "大便干",
+    "尿黄": "小便黄",
+    "小便色黄": "小便黄",
+}
 
 TONGUE_TERMS = [
     "舌红",
@@ -263,11 +280,25 @@ SYNDROME_PROFILES: Dict[str, Dict[str, Any]] = {
         "formula": "二陈汤合三子养亲汤加减",
     },
     "阴虚内热": {
-        "symptoms": ["盗汗", "低热", "咯血", "消瘦", "口干"],
+        "symptoms": ["盗汗", "低热", "咯血", "消瘦", "口干", "口渴"],
         "tongue_tags": ["舌红"],
         "pulse_tags": ["脉细", "脉数"],
         "therapy": "滋阴清热，润肺止咳",
         "formula": "沙参麦冬汤加减",
+    },
+    "胃热伤津": {
+        "symptoms": ["口干", "口渴", "口苦", "大便干", "小便黄", "喜冷饮"],
+        "tongue_tags": ["舌红", "苔黄腻"],
+        "pulse_tags": ["脉数"],
+        "therapy": "清胃泄热，生津润燥",
+        "formula": "需补齐舌脉与二便后再讨论方义方向",
+    },
+    "心火上炎": {
+        "symptoms": ["口干", "心烦", "失眠", "口苦", "小便黄"],
+        "tongue_tags": ["舌红"],
+        "pulse_tags": ["脉数"],
+        "therapy": "清心泻火，养阴安神",
+        "formula": "需补齐舌脉与睡眠情况后再讨论方义方向",
     },
     "脾肺气虚": {
         "symptoms": ["乏力", "气短", "食欲差", "咳嗽"],
@@ -318,14 +349,17 @@ class SmartQAService:
         mode: str = "text",
         scenario: Optional[str] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
+        history: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         clean_question = self._normalize(question)
         attachments = attachments or []
+        conversation_history = self._normalize_history(history or [])
+        case_context = self._build_case_context(clean_question, conversation_history)
 
-        extracted_fields = self._extract_fields(clean_question, attachments)
+        extracted_fields = self._extract_fields(case_context, attachments)
         is_general_question = self._is_general_question(clean_question, extracted_fields)
 
-        resolved_scenario = self._resolve_scenario(scenario=scenario, question=clean_question, mode=mode)
+        resolved_scenario = self._resolve_scenario(scenario=scenario, question=case_context, mode=mode)
         if is_general_question and not scenario:
             resolved_scenario = "科研传承"
 
@@ -347,28 +381,56 @@ class SmartQAService:
             therapy = "当前为通识问答场景，需结合个体四诊信息后再进入证候治法判断。"
             formula = "通识问答不直接生成方药草案。"
 
-        local_hits = knowledge_service.search(query=clean_question, top_k=4)
-        professional_hits = [] if is_general_question else professional_knowledge_service.search(query=clean_question, top_k=4)
-        evidences = self._filter_out_of_scope_evidences(self._merge_evidences(local_hits, professional_hits))
+        evidence_query = self._build_evidence_query(case_context, extracted_fields, syndrome_candidates)
+        local_hits = knowledge_service.search(query=evidence_query, top_k=6)
+        professional_hits = [] if is_general_question else professional_knowledge_service.search(query=evidence_query, top_k=6)
+        evidences = self._select_relevant_evidences(
+            self._filter_out_of_scope_evidences(self._merge_evidences(local_hits, professional_hits)),
+            extracted_fields=extracted_fields,
+            syndrome_candidates=syndrome_candidates,
+        )
         if is_general_question:
             evidences = []
 
         faq_answer = self._match_faq(clean_question) if is_general_question else ""
+        is_greeting = self._is_greeting(clean_question)
         attachment_note = self._attachment_note(attachments)
         boundary = self._boundary_notice(clean_question)
         topic_guarded = self._contains_out_of_scope_topic(clean_question)
         extracted_fields["topic_guarded"] = topic_guarded
         risk_prompts = self._build_risk_prompts(boundary, extracted_fields)
 
-        fallback_answer = (
-            f"结合当前输入信息，系统优先考虑证候为“{top_syndrome}”（置信度 {top_candidate.get('score', 0):.2f}），"
-            f"建议治法为“{therapy}”，方药可参考“{formula}”。"
-        )
+        low_confidence = (not is_general_question) and top_candidate.get("score", 0) < 0.45
+        if low_confidence:
+            candidate_text = "、".join([f"{item['name']}({item['score']})" for item in syndrome_candidates[:3]]) or "暂无候选"
+            fallback_answer = (
+                "【初步判断】\n"
+                f"当前信息不足，只能形成候选证型排序：{candidate_text}。\n\n"
+                "【原因说明】\n"
+                "目前支持线索偏少，缺少舌象、脉象、病程及二便/睡眠等鉴别信息，不宜直接定为单一证候。\n\n"
+                "【下一步建议】\n"
+                "请继续补充：口干是否想饮水、喜冷饮还是热饮、是否口苦心烦失眠、大便是否干、小便是否黄，以及舌象和脉象。"
+            )
+        else:
+            fallback_answer = (
+                f"结合当前输入信息，系统优先考虑证候为“{top_syndrome}”（置信度 {top_candidate.get('score', 0):.2f}），"
+                f"建议治法为“{therapy}”，方药可参考“{formula}”。"
+            )
         llm_result: Dict[str, Any] = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "not_called"}
 
         if topic_guarded:
             answer = "当前平台仅提供通用中医辨证、方药与科研问答，请改用症状、舌象、脉象、体质或方药问题继续咨询。"
             llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "topic_guard"}
+        elif is_greeting:
+            answer = (
+                "【初步判断】\n"
+                "您好，我是岐衡中医智能体平台的智慧问答助手。\n\n"
+                "【原因说明】\n"
+                "我可以帮助您整理症状、追问四诊信息、给出证候候选排序，并引用中医药知识库作为辅助依据。\n\n"
+                "【下一步建议】\n"
+                "请直接描述主要不适，例如：口干多久了、是否口苦心烦、舌象脉象、睡眠和二便情况。"
+            )
+            llm_result = {"ok": False, "provider": "self", "model": SELF_MODEL_NAME, "error": "greeting"}
         elif is_general_question:
             llm_result = self._generate_general_llm_answer(
                 question=clean_question,
@@ -388,6 +450,7 @@ class SmartQAService:
         else:
             llm_result = self._generate_llm_answer(
                 question=clean_question,
+                case_context=case_context,
                 scenario=resolved_scenario,
                 top_candidate=top_candidate,
                 syndrome_candidates=syndrome_candidates,
@@ -396,6 +459,7 @@ class SmartQAService:
                 evidences=evidences,
                 missing_items=missing_items,
                 boundary=boundary,
+                low_confidence=low_confidence,
             )
             answer = llm_result.get("content", "") if llm_result.get("ok") else fallback_answer
 
@@ -434,19 +498,30 @@ class SmartQAService:
         )
 
         result_cards = {
-            "chief_complaint_summary": self._summarize_complaint(clean_question),
+            "chief_complaint_summary": self._summarize_complaint(case_context),
             "recognized_symptoms": extracted_fields.get("symptoms", []),
             "tongue_pulse": {
                 "tongue": extracted_fields.get("tongue_tags", []),
                 "pulse": extracted_fields.get("pulse_tags", []),
             },
             "syndrome_candidates": syndrome_candidates,
-            "therapy_suggestions": [] if is_general_question else [therapy],
+            "therapy_suggestions": [] if is_general_question else self._build_therapy_suggestions(
+                syndrome_candidates=syndrome_candidates,
+                therapy=therapy,
+                low_confidence=low_confidence,
+            ),
             "formula_draft": {
-                "name": formula if not is_general_question else "待个体化辨证后生成",
+                "name": (
+                    "当前置信度不足，暂不生成方药草案"
+                    if low_confidence
+                    else formula if not is_general_question
+                    else "待个体化辨证后生成"
+                ),
                 "note": (
                     "通识问答场景不输出个体化方药，需补齐主诉、舌脉与病程后再推理。"
                     if is_general_question
+                    else "当前仅保留候选证型与追问信息，补齐四诊后再生成方药方向。"
+                    if low_confidence
                     else "MVP 草案，仅作学术与流程演示，需医生审核确认。"
                 ),
             },
@@ -482,6 +557,7 @@ class SmartQAService:
             "suggested_questions": suggested_questions,
             "process_cards": process_cards,
             "extracted_fields": extracted_fields,
+            "case_context": case_context,
             "result_cards": result_cards,
             "graph_links": graph_links,
             "workflow_tasks": workflow_tasks,
@@ -516,6 +592,8 @@ class SmartQAService:
         q = (question or "").strip()
         if not q:
             return False
+        if self._is_greeting(q):
+            return True
 
         structured_signal_count = int(extracted_fields.get("structured_signal_count", 0) or 0)
         if structured_signal_count > 0:
@@ -526,6 +604,9 @@ class SmartQAService:
         explicit_method_pattern = bool(re.search(r"(如何|怎么|怎样).{0,8}(判断|辨别|区分|识别)", q))
 
         return (general_hint and not case_hint) or explicit_method_pattern
+
+    def _is_greeting(self, question: str) -> bool:
+        return (question or "").strip() in {"你好", "您好", "hello", "Hello", "嗨"}
 
     def _build_general_answer(self, question: str) -> str:
         _ = question  # 保留参数，便于后续按问题定制模板
@@ -575,8 +656,43 @@ class SmartQAService:
             {"title": "上传舌象/病历材料", "action": "upload_materials", "priority": "P2", "status": "ready"},
         ]
 
+    def _normalize_history(self, history: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+        normalized: List[Dict[str, str]] = []
+        for item in history[-8:]:
+            if not isinstance(item, dict):
+                continue
+            role = str(item.get("role", "") or "").strip().lower()
+            content = self._normalize(str(item.get("content", "") or ""))
+            if role not in {"user", "assistant"} or not content:
+                continue
+            normalized.append({"role": role, "content": content[:800]})
+        return normalized
+
+    def _build_case_context(self, question: str, history: List[Dict[str, str]]) -> str:
+        user_turns = [item["content"] for item in history if item.get("role") == "user"]
+        if question:
+            user_turns.append(question)
+
+        seen = set()
+        compact_turns: List[str] = []
+        for text in user_turns[-6:]:
+            if text in seen:
+                continue
+            seen.add(text)
+            compact_turns.append(text)
+
+        return self._normalize("；".join(compact_turns))[:1800]
+
+    def _apply_symptom_aliases(self, text: str) -> str:
+        normalized = text
+        for source, target in SYMPTOM_ALIASES.items():
+            if source in normalized and target not in normalized:
+                normalized += f" {target}"
+        return normalized
+
     def _extract_fields(self, question: str, attachments: List[Dict[str, Any]]) -> Dict[str, Any]:
-        symptoms = [item for item in SYMPTOM_TERMS if item in question]
+        normalized_question = self._apply_symptom_aliases(question)
+        symptoms = [item for item in SYMPTOM_TERMS if item in normalized_question]
         tongue_tags = [item for item in TONGUE_TERMS if item in question]
         pulse_tags = [item for item in PULSE_TERMS if item in question]
         risk_history = [item for item in RISK_HISTORY_TERMS if item in question]
@@ -622,31 +738,44 @@ class SmartQAService:
         symptoms = extracted_fields.get("symptoms", [])
         tongue_tags = extracted_fields.get("tongue_tags", [])
         pulse_tags = extracted_fields.get("pulse_tags", [])
+        structured_signal_count = int(extracted_fields.get("structured_signal_count", 0) or 0)
+        if structured_signal_count <= 0:
+            return []
 
         ranking: List[Dict[str, Any]] = []
         for syndrome_name, profile in SYNDROME_PROFILES.items():
-            score = 0.18
+            matched_symptoms = [item for item in symptoms if item in profile.get("symptoms", [])]
+            matched_tongue = [item for item in tongue_tags if item in profile.get("tongue_tags", [])]
+            matched_pulse = [item for item in pulse_tags if item in profile.get("pulse_tags", [])]
 
-            for item in symptoms:
-                if item in profile.get("symptoms", []):
-                    score += 0.12
+            score = 0.08
 
-            for item in tongue_tags:
-                if item in profile.get("tongue_tags", []):
-                    score += 0.14
+            for _item in matched_symptoms:
+                score += 0.14
 
-            for item in pulse_tags:
-                if item in profile.get("pulse_tags", []):
-                    score += 0.13
+            for _item in matched_tongue:
+                score += 0.16
 
-            if scenario == "临床辨证" and syndrome_name in {"痰热扰心", "肝郁化火", "心脾两虚"}:
-                score += 0.05
-            if scenario == "方药解析" and syndrome_name in {"痰瘀互结", "痰湿阻肺"}:
-                score += 0.05
-            if scenario in {"体质调理", "慢病调护"} and syndrome_name in {"心脾两虚", "痰湿阻肺", "脾肺气虚"}:
-                score += 0.06
+            for _item in matched_pulse:
+                score += 0.15
 
-            ranking.append({"name": syndrome_name, "score": round(min(0.98, score), 2)})
+            if len(matched_symptoms) >= 2:
+                score += 0.08
+            if matched_symptoms and (matched_tongue or matched_pulse):
+                score += 0.10
+            if scenario == "方药解析" and syndrome_name in {"痰瘀互结", "痰湿阻肺"} and matched_symptoms:
+                score += 0.03
+            if scenario in {"体质调理", "慢病调护"} and syndrome_name in {"心脾两虚", "痰湿阻肺", "脾肺气虚"} and matched_symptoms:
+                score += 0.03
+
+            if matched_symptoms or matched_tongue or matched_pulse:
+                ranking.append(
+                    {
+                        "name": syndrome_name,
+                        "score": round(min(0.98, score), 2),
+                        "support": matched_symptoms + matched_tongue + matched_pulse,
+                    }
+                )
 
         ranking.sort(key=lambda x: x["score"], reverse=True)
         return ranking[:3]
@@ -654,6 +783,7 @@ class SmartQAService:
     def _generate_llm_answer(
         self,
         question: str,
+        case_context: str,
         scenario: str,
         top_candidate: Dict[str, Any],
         syndrome_candidates: List[Dict[str, Any]],
@@ -662,32 +792,41 @@ class SmartQAService:
         evidences: List[Dict[str, Any]],
         missing_items: List[str],
         boundary: Dict[str, Any],
+        low_confidence: bool,
     ) -> Dict[str, Any]:
         evidence_titles = [item.get("title", "") for item in evidences[:3] if item.get("title")]
         evidence_digest = self._build_evidence_digest(evidences)
-        candidate_text = "、".join([f"{item['name']}({item['score']})" for item in syndrome_candidates[:3]]) or "暂无候选"
+        candidate_text = "、".join(
+            [
+                f"{item['name']}({item['score']}，支持:{'、'.join(item.get('support', [])[:4]) or '待补证'})"
+                for item in syndrome_candidates[:3]
+            ]
+        ) or "暂无候选"
 
         system_prompt = (
             "你是中医智能体平台的问答助手。"
             "请用中文输出，语气专业克制。"
             "禁止输出确诊、处方剂量或替代医生面诊的结论。"
+            "你必须基于多轮病例上下文更新判断，不能复用上一轮固定模板。"
             "请严格按三个小节输出：\n"
             "【初步判断】\n【原因说明】\n【下一步建议】"
         )
 
         user_prompt = (
             f"场景：{scenario}\n"
-            f"用户问题：{question}\n"
+            f"本轮用户问题：{question}\n"
+            f"多轮病例上下文：{case_context}\n"
             f"候选证候：{candidate_text}\n"
-            f"首位候选：{top_candidate.get('name', '待确认')}（置信度{top_candidate.get('score', 0)}）\n"
-            f"建议治法：{therapy}\n"
-            f"建议方药：{formula}\n"
+            f"首位候选：{'信息不足，暂不设首位候选' if low_confidence else top_candidate.get('name', '待确认') + '（置信度' + str(top_candidate.get('score', 0)) + '）'}\n"
+            f"建议治法：{'暂不确定治法，只列鉴别方向' if low_confidence else therapy}\n"
+            f"建议方药：{'低置信度阶段不生成方药草案' if low_confidence else formula}\n"
             f"证据标题：{'；'.join(evidence_titles) if evidence_titles else '暂无'}\n"
             f"检索证据摘要：\n{evidence_digest}\n"
             f"缺失信息：{'、'.join(missing_items) if missing_items else '无'}\n"
             f"边界状态：{'触发边界' if boundary.get('is_boundary') else '常规科普'}\n"
+            f"置信度策略：{'低置信度，只能给候选排序和追问，不得给单一证候或方药建议。' if low_confidence else '可给初步辨证方向，但仍需医生确认。'}\n"
             "要求：每个小节控制在3行以内；若触发边界，必须提示线下就医与医生确认；若有检索证据，"
-            "在【原因说明】中尽量使用[1][2]的编号方式说明依据。"
+            "在【原因说明】中用[1][2]编号说明依据；如果证据不足，必须明确说“当前证据不足”。"
         )
 
         return llm_gateway_service.chat(
@@ -933,6 +1072,73 @@ class SmartQAService:
             return clean
         return clean[:320] + "。完整内容请查看右侧文本。"
 
+    def _build_therapy_suggestions(
+        self,
+        syndrome_candidates: List[Dict[str, Any]],
+        therapy: str,
+        low_confidence: bool,
+    ) -> List[str]:
+        if low_confidence:
+            suggestions: List[str] = []
+            for item in syndrome_candidates[:3]:
+                profile = SYNDROME_PROFILES.get(item.get("name", ""), {})
+                candidate_therapy = profile.get("therapy")
+                if candidate_therapy:
+                    suggestions.append(f"{item.get('name')}方向：{candidate_therapy}")
+            return suggestions or ["信息不足，先补齐四诊后再确定治法方向。"]
+        return [therapy] if therapy else ["待补齐资料后确认治法。"]
+
+    def _build_evidence_query(
+        self,
+        case_context: str,
+        extracted_fields: Dict[str, Any],
+        syndrome_candidates: List[Dict[str, Any]],
+    ) -> str:
+        terms: List[str] = []
+        terms.extend(extracted_fields.get("symptoms", [])[:6])
+        terms.extend(extracted_fields.get("tongue_tags", [])[:4])
+        terms.extend(extracted_fields.get("pulse_tags", [])[:4])
+        terms.extend([item.get("name", "") for item in syndrome_candidates[:3]])
+        terms.extend(["辨证", "证候", "治法"])
+        compact_terms = [item for item in terms if item]
+        return self._normalize(f"{case_context} {' '.join(compact_terms)}")
+
+    def _select_relevant_evidences(
+        self,
+        evidences: List[Dict[str, Any]],
+        extracted_fields: Dict[str, Any],
+        syndrome_candidates: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        symptom_terms = set(extracted_fields.get("symptoms", []))
+        tongue_terms = set(extracted_fields.get("tongue_tags", []))
+        pulse_terms = set(extracted_fields.get("pulse_tags", []))
+        syndrome_terms = {item.get("name", "") for item in syndrome_candidates[:3] if item.get("name")}
+        query_terms = {item for item in symptom_terms | tongue_terms | pulse_terms | syndrome_terms if item}
+
+        if not query_terms:
+            return []
+
+        reranked: List[Dict[str, Any]] = []
+        for item in evidences:
+            title = str(item.get("title", ""))
+            snippet = str(item.get("snippet", ""))
+            merged_text = f"{title} {snippet}"
+            matched_terms = [term for term in query_terms if term and term in merged_text]
+
+            # 避免把弱相关医案长段落硬贴进依据栏。
+            if not matched_terms:
+                continue
+
+            relevance = len(set(matched_terms)) * 0.35 + float(item.get("score", 0))
+            enriched = dict(item)
+            enriched["score"] = round(relevance, 3)
+            enriched["matched_terms"] = list(dict.fromkeys(matched_terms))[:5]
+            enriched["support_point"] = "支持点：命中" + "、".join(enriched["matched_terms"])
+            reranked.append(enriched)
+
+        reranked.sort(key=lambda x: x.get("score", 0), reverse=True)
+        return reranked[:4]
+
     def _build_evidence_digest(self, evidences: List[Dict[str, Any]]) -> str:
         if not evidences:
             return "暂无"
@@ -941,9 +1147,10 @@ class SmartQAService:
             title = str(item.get("title", "")).strip() or "未命名证据"
             snippet = str(item.get("snippet", "")).strip()
             source_type = str(item.get("source_type", "")).strip()
+            support_point = str(item.get("support_point", "")).strip()
             if len(snippet) > 72:
                 snippet = snippet[:72] + "..."
-            lines.append(f"[{idx}] {title} | {source_type} | {snippet}")
+            lines.append(f"[{idx}] {title} | {source_type} | {support_point or snippet}")
         return "\n".join(lines)
 
     def _build_citation_block(self, evidences: List[Dict[str, Any]]) -> str:
@@ -953,10 +1160,11 @@ class SmartQAService:
         for idx, item in enumerate(evidences[:3], start=1):
             title = str(item.get("title", "")).strip() or "未命名证据"
             source_type = str(item.get("source_type", "")).strip() or "unknown"
-            snippet = str(item.get("snippet", "")).strip()
-            if len(snippet) > 86:
-                snippet = snippet[:86] + "..."
-            lines.append(f"[{idx}] {title}（{source_type}）: {snippet}")
+            support_point = str(item.get("support_point", "")).strip()
+            if support_point:
+                lines.append(f"[{idx}] {title}（{source_type}）: {support_point}。")
+            else:
+                lines.append(f"[{idx}] {title}（{source_type}）: 与当前症状或证候存在文本命中，需专家复核相关性。")
         lines.append("以上引用用于辅助推理，不替代执业医生面诊结论。")
         return "\n".join(lines)
 

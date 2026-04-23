@@ -34,6 +34,7 @@ def smart_qa_ask(payload: SmartQARequest, request: Request) -> SmartQAResponse:
         mode=payload.mode,
         scenario=payload.scenario,
         attachments=[item.model_dump() for item in payload.attachments],
+        history=payload.history,
     )
 
     record_event(

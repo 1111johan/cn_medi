@@ -52,6 +52,7 @@ let latestResult = null;
 let latestQuestion = "";
 let currentCaseId = "";
 let activeModelName = "岐衡·太乙中医大模型";
+let conversationHistory = [];
 
 function setAvatarFallbackText(text) {
   if (!avatarFallbackNode) return;
@@ -218,7 +219,10 @@ function renderResultsPanel(result) {
   if (!panelResults) return;
   const card = result.result_cards || {};
   const syndromeRows = (card.syndrome_candidates || [])
-    .map((item) => `<div class="kv-row"><span>${window.tcmApi.escapeHtml(item.name)}</span><strong>${window.tcmApi.escapeHtml(String(item.score))}</strong></div>`)
+    .map((item) => {
+      const support = (item.support || []).join("、");
+      return `<div class="kv-row"><span>${window.tcmApi.escapeHtml(item.name)}${support ? `<small> · ${window.tcmApi.escapeHtml(support)}</small>` : ""}</span><strong>${window.tcmApi.escapeHtml(String(item.score))}</strong></div>`;
+    })
     .join("");
 
   const therapyRows = (card.therapy_suggestions || [])
@@ -259,6 +263,7 @@ function renderEvidencePanel(result) {
       (item, idx) => `
       <div class="panel-card">
         <h4>#${idx + 1} ${window.tcmApi.escapeHtml(item.title || "")}</h4>
+        ${item.support_point ? `<p class="tiny-note">${window.tcmApi.escapeHtml(item.support_point)}</p>` : ""}
         <p>${window.tcmApi.escapeHtml(item.snippet || "")}</p>
         <div class="tiny-note">来源：${window.tcmApi.escapeHtml(item.source_type || "")}</div>
       </div>
@@ -533,6 +538,7 @@ function resetSession() {
   latestResult = null;
   latestQuestion = "";
   currentCaseId = "";
+  conversationHistory = [];
 
   if (speechScriptNode) {
     speechScriptNode.textContent = "提交问题后自动生成回答摘要。";
@@ -589,12 +595,14 @@ function bindEvents() {
       mode: modeSelect.value,
       scenario: scenarioSelect.value || null,
       attachments: buildAttachments(),
+      history: conversationHistory.slice(-8),
     };
 
     latestQuestion = question;
-    currentCaseId = `qa-${Date.now()}`;
+    if (!currentCaseId) currentCaseId = `qa-${Date.now()}`;
 
     appendMessage("user", question);
+    conversationHistory.push({ role: "user", content: question });
     appendMessage("assistant", "正在思考，请稍候...");
     setPageState("thinking", "正在分析", "正在生成回答。");
 
@@ -607,6 +615,8 @@ function bindEvents() {
       latestResult = result;
 
       replaceLastAssistant(result.answer || "");
+      conversationHistory.push({ role: "assistant", content: result.answer || "" });
+      conversationHistory = conversationHistory.slice(-10);
       attachAssistantActions(result);
       renderConversationMeta(result);
       updateTranscript(result.extracted_fields || {});

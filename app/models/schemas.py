@@ -102,6 +102,8 @@ class EvidenceItem(BaseModel):
     source_type: str
     snippet: str
     score: float
+    matched_terms: List[str] = Field(default_factory=list)
+    support_point: str = ""
 
 
 class ResearchQAResponse(BaseModel):
@@ -121,6 +123,7 @@ class SmartQARequest(BaseModel):
     mode: str = Field(default="text", description="text | voice | image | document | mixed")
     scenario: Optional[str] = None
     attachments: List[SmartQAAttachment] = Field(default_factory=list)
+    history: List[Dict[str, Any]] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
