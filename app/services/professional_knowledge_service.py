@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
-from app.core.config import DATA_DIR, PROFESSIONAL_DATA_DIR
+from app.core.config import BUNDLED_DATA_DIR, DATA_DIR, PROFESSIONAL_DATA_DIR
 
 
 STOPWORDS = {
@@ -60,7 +60,11 @@ SUPPORTED_STRUCTURED_EXTENSIONS = {".csv"}
 SUPPORTED_HTML_EXTENSIONS = {".html", ".htm"}
 SUPPORTED_EXTENSIONS = SUPPORTED_TEXT_EXTENSIONS | SUPPORTED_STRUCTURED_EXTENSIONS | SUPPORTED_HTML_EXTENSIONS
 
-DEFAULT_DB_PATH = DATA_DIR / "professional_knowledge.db"
+DEFAULT_DB_PATH = (
+    BUNDLED_DATA_DIR / "professional_knowledge.db"
+    if (BUNDLED_DATA_DIR / "professional_knowledge.db").exists()
+    else DATA_DIR / "professional_knowledge.db"
+)
 
 
 class ProfessionalKnowledgeService:
@@ -188,11 +192,23 @@ class ProfessionalKnowledgeService:
             if not force and self._ready and (now - self._last_check_at) < self._check_interval_seconds:
                 return
 
+            if not force and self.db_path.exists() and not self.root_dir.exists():
+                try:
+                    with self._connect() as conn:
+                        existing_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
+                except sqlite3.Error:
+                    existing_count = 0
+                if int(existing_count) > 0:
+                    self._ready = True
+                    self._last_check_at = time.time()
+                    return
+
             files = self._collect_supported_files()
             signature = self._calculate_signature(files)
 
             with self._connect() as conn:
-                self._init_schema(conn)
+                if self._can_write_db():
+                    self._init_schema(conn)
                 stored_signature = self._meta_get(conn, "dataset_signature")
                 existing_count = conn.execute("SELECT COUNT(*) FROM professional_documents").fetchone()[0]
 
@@ -384,12 +400,20 @@ class ProfessionalKnowledgeService:
         ]
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        if self.db_path.exists() and not self._can_write_db():
+            conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
+        else:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute("PRAGMA journal_mode = WAL")
+            conn.execute("PRAGMA synchronous = NORMAL")
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode = WAL")
-        conn.execute("PRAGMA synchronous = NORMAL")
         conn.execute("PRAGMA temp_store = MEMORY")
         return conn
+
+    def _can_write_db(self) -> bool:
+        if self.db_path.exists():
+            return os.access(self.db_path, os.W_OK)
+        return os.access(self.db_path.parent, os.W_OK)
 
     def _init_schema(self, conn: sqlite3.Connection) -> None:
         conn.execute(

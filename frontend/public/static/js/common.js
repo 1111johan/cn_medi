@@ -302,6 +302,7 @@ function resolveApiUrl(url) {
 async function fetchJson(url, options = {}) {
   const method = String(options.method || "GET").toUpperCase();
   const staticFile = getStaticSnapshotFile(parseRequestTarget(url).pathname);
+  const useStaticTimeoutFallback = method === "GET" && staticFile;
 
   if (isStaticReadonlyMode() && method === "GET" && staticFile) {
     return fetchStaticSnapshot(url);
@@ -313,6 +314,14 @@ async function fetchJson(url, options = {}) {
 
   const finalUrl = resolveApiUrl(url);
   let response;
+  let timeoutId = null;
+  let timeoutController = null;
+  let signal = options.signal;
+  if (!signal && useStaticTimeoutFallback && typeof AbortController !== "undefined") {
+    timeoutController = new AbortController();
+    timeoutId = setTimeout(() => timeoutController.abort(), 4500);
+    signal = timeoutController.signal;
+  }
   try {
     response = await fetch(finalUrl, {
       headers: {
@@ -320,12 +329,17 @@ async function fetchJson(url, options = {}) {
         ...(options.headers || {}),
       },
       ...options,
+      signal,
     });
   } catch (error) {
     if (method === "GET" && staticFile) {
       return fetchStaticSnapshot(url);
     }
     throw error;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 
   if (response.status === 204) {

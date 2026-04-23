@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 
 
@@ -25,19 +26,48 @@ def _load_local_env() -> None:
 _load_local_env()
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+BUNDLED_DATA_DIR = BASE_DIR / "data"
+
+
+def _is_writable_dir(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / ".codex_write_probe"
+        probe.write_text("", encoding="utf-8")
+        probe.unlink()
+        return True
+    except OSError:
+        return False
 
 
 def _resolve_data_dir() -> Path:
     """Resolve a writable data directory for both local and serverless runtimes."""
-    preferred = Path(os.getenv("TCM_DATA_DIR", str(BASE_DIR / "data")))
-    try:
-        preferred.mkdir(parents=True, exist_ok=True)
+    preferred = Path(os.getenv("TCM_DATA_DIR", str(BUNDLED_DATA_DIR)))
+    if _is_writable_dir(preferred):
         return preferred.resolve()
+    # Vercel/Lambda runtime filesystem is read-only except /tmp.
+    fallback = Path("/tmp/tcm-data")
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback.resolve()
+
+
+def _resolve_runtime_file(filename: str) -> Path:
+    runtime_path = (DATA_DIR / filename).resolve()
+    bundled_path = (BUNDLED_DATA_DIR / filename).resolve()
+
+    if runtime_path == bundled_path:
+        return runtime_path
+    if runtime_path.exists():
+        return runtime_path
+    if not bundled_path.exists():
+        return runtime_path
+
+    try:
+        runtime_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(bundled_path, runtime_path)
+        return runtime_path
     except OSError:
-        # Vercel/Lambda runtime filesystem is read-only except /tmp.
-        fallback = Path("/tmp/tcm-data")
-        fallback.mkdir(parents=True, exist_ok=True)
-        return fallback.resolve()
+        return bundled_path
 
 
 DATA_DIR = _resolve_data_dir()
@@ -91,10 +121,10 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 DASHSCOPE_APP_ID = os.getenv("DASHSCOPE_APP_ID", "")
 
-KNOWLEDGE_FILE = DATA_DIR / "knowledge_objects.json"
-FEEDBACK_FILE = DATA_DIR / "feedback_records.json"
-AUDIT_FILE = DATA_DIR / "audit_records.jsonl"
-REVIEW_TASK_FILE = DATA_DIR / "review_tasks.json"
+KNOWLEDGE_FILE = _resolve_runtime_file("knowledge_objects.json")
+FEEDBACK_FILE = _resolve_runtime_file("feedback_records.json")
+AUDIT_FILE = _resolve_runtime_file("audit_records.jsonl")
+REVIEW_TASK_FILE = _resolve_runtime_file("review_tasks.json")
 
 SYNDROME_RULES = {
     "气血两虚": {

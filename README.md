@@ -35,7 +35,12 @@ uvicorn app.main:app --reload
 
 ## 2.1 Vite 前端部署（Vercel 推荐）
 
-仓库已新增 `frontend/`（Vite 静态页面），可直接部署到 Vercel。
+仓库使用“Vite 静态前端 + 根目录 `api/*.py` FastAPI 函数”方式部署到 Vercel。
+其中：
+
+- 静态站点产物来自 `frontend/dist`
+- `/api/*` 由根目录 `api/index.py`、`api/[...path].py` 暴露 FastAPI
+- `api-static/*` 由 `scripts/export_static_api_snapshots.py` 在构建期导出
 
 本地预览：
 
@@ -48,17 +53,41 @@ npm run dev
 生产构建：
 
 ```bash
-cd frontend
-npm run build
+npm run build:frontend
 ```
 
 如需对接后端 API，请在 `frontend/.env`（或 Vercel 环境变量）配置：
 
 ```bash
-VITE_API_BASE=https://your-api-domain.com
+VITE_API_BASE=/api
 ```
 
-> 说明：Vercel 会使用根目录 `vercel.json`，执行 `frontend` 的 Vite 构建并发布 `frontend/dist`。
+Vercel 配置要求：
+
+- Root Directory 必须是仓库根目录，不能设成 `frontend/`
+- Build Command 应为 `npm run build:frontend`
+- Output Directory 应为 `frontend/dist`
+- 仓库根目录必须保留 `api/index.py` 与 `api/[...path].py`
+
+> 说明：Vercel 会使用根目录 `vercel.json`，先导出 `api-static`，再构建 `frontend/dist`，同时自动识别根目录 `api/*.py` 为 Python Functions。
+
+线上自检：
+
+```bash
+python3 scripts/check_vercel_deploy.py https://your-vercel-domain.vercel.app
+```
+
+你应至少看到：
+
+- `/api/health` 返回 `200`
+- `/api-static/knowledge/list.json` 返回 `200`
+- `/api-static/knowledge/professional/stats.json` 返回 `200`
+
+如果仍异常，优先检查：
+
+- Vercel Dashboard -> Project Settings -> General -> Root Directory
+- Vercel Dashboard -> Project Settings -> Build & Development Settings 是否覆盖了仓库里的 `vercel.json`
+- Vercel Dashboard -> Deployments -> 当前部署 -> Build Logs / Function Logs
 
 CloudBase / CNB 构建（根目录执行）：
 

@@ -1,6 +1,11 @@
 {
   "framework": "vite",
-  "installCommand": "cd frontend && npm install",
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist"
+  "installCommand": "npm install",
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/*.py": {
+      "maxDuration": 60
+    }
+  }
 }
