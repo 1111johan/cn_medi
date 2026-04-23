@@ -67,7 +67,7 @@ Vercel 配置要求：
 - Root Directory 必须是仓库根目录，不能设成 `frontend/`
 - Build Command 应为 `npm run build:frontend`
 - Output Directory 应为 `frontend/dist`
-- 仓库根目录必须保留 `api/index.py` 与 `api/[...path].py`
+- 仓库根目录必须保留 `api/index.py` 作为单一 FastAPI 入口；`vercel.json` 会把 `/api/(.*)` rewrite 到它
 
 > 说明：Vercel 会使用根目录 `vercel.json`，先导出 `api-static`，再构建 `frontend/dist`，同时自动识别根目录 `api/*.py` 为 Python Functions。
 
