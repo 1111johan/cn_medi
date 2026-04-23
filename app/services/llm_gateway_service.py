@@ -33,11 +33,11 @@ class LLMGatewayService:
         max_tokens: int = 700,
     ) -> Dict[str, Any]:
         provider = (PRIMARY_LLM_PROVIDER or "").strip().lower()
-        # Keep DeepSeek as primary path even when deployment env accidentally keeps old provider values.
-        if provider not in {"", "deepseek"} and DEEPSEEK_API_KEY:
-            provider = "deepseek"
+        # DeepSeek / DashScope both use OpenAI-compatible chat/completions here.
+        if provider not in {"", "deepseek", "dashscope", "qwen", "aliyun"} and DEEPSEEK_API_KEY:
+            provider = "dashscope"
 
-        if provider in {"", "deepseek"}:
+        if provider in {"", "deepseek", "dashscope", "qwen", "aliyun"}:
             return self._chat_deepseek(messages=messages, temperature=temperature, max_tokens=max_tokens)
 
         return {

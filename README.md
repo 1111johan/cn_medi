@@ -119,13 +119,16 @@ export TCM_PRO_DATA_DIR="/Users/xuai/Desktop/cursor—file/cn_mdecine/中医药"
 
 项目启动时会自动读取根目录下 `.env.local` / `.env`，可在其中配置模型与三方 API Key。
 
-DeepSeek 接入示例（`.env.local`）：
+通义千问/阿里云百炼接入示例（`.env.local`，OpenAI 兼容模式）：
 
 ```bash
-PRIMARY_LLM_PROVIDER=deepseek
-PRIMARY_LLM_MODEL=deepseek-chat
+PRIMARY_LLM_PROVIDER=dashscope
+PRIMARY_LLM_MODEL=qwen3-max
 DEEPSEEK_API_KEY=sk-xxxx
-DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_CHAT_MODEL=qwen3-max
+DEEPSEEK_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+DEEPSEEK_BASE_URL_FALLBACK=https://dashscope.aliyuncs.com/compatible-mode/v1
+DASHSCOPE_API_KEY=sk-xxxx
 ```
 
 VPN / 代理网络场景（可选）：
