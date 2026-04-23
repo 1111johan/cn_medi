@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query, Request
 
 from app.api.routes.utils import resolve_actor
 from app.core.audit import record_event
+from app.core.public_payloads import public_professional_stats
 from app.models.schemas import KnowledgeIngestRequest, KnowledgeIngestResponse, KnowledgeObject, KnowledgeSearchItem
 from app.services.knowledge_service import knowledge_service
 from app.services.professional_knowledge_service import professional_knowledge_service
@@ -42,7 +43,7 @@ def list_knowledge(limit: int = Query(default=50, ge=1, le=500)) -> List[Knowled
 
 @router.get("/knowledge/professional/stats")
 def professional_knowledge_stats() -> dict:
-    return professional_knowledge_service.stats()
+    return public_professional_stats(professional_knowledge_service.stats())
 
 
 @router.post("/knowledge/professional/rebuild")
@@ -54,10 +55,9 @@ def professional_knowledge_rebuild(request: Request) -> dict:
         details={
             "record_count": result.get("record_count", 0),
             "indexed_files": result.get("indexed_files", 0),
-            "db_path": result.get("db_path", ""),
         },
     )
-    return result
+    return public_professional_stats(result)
 
 
 @router.get("/knowledge/professional/search")

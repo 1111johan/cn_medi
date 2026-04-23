@@ -187,13 +187,14 @@ def run() -> int:
         ),
     )
 
-    test(
-        "API GET /knowledge/professional/stats",
-        lambda: _check(
-            _request("GET", "/knowledge/professional/stats").get("available") is True,
-            "professional stats unavailable",
-        ),
-    )
+    def t_professional_stats() -> None:
+        result = _request("GET", "/knowledge/professional/stats")
+        _check(result.get("available") is True, "professional stats unavailable")
+        _check("db_path" not in result, "professional stats leaked db_path")
+        _check("root_dir" not in result, "professional stats leaked root_dir")
+        _check("dataset_signature" not in result, "professional stats leaked dataset_signature")
+
+    test("API GET /knowledge/professional/stats", t_professional_stats)
 
     test(
         "API GET /knowledge/professional/search",
@@ -493,13 +494,28 @@ def run() -> int:
         ),
     )
 
-    test(
-        "API GET /governance/audit",
-        lambda: _check(
-            isinstance(_request("GET", "/governance/audit?limit=50"), list),
-            "governance audit not list",
-        ),
-    )
+    def t_governance_audit() -> None:
+        result = _request("GET", "/governance/audit?limit=50")
+        forbidden_keys = {
+            "case_id",
+            "comment",
+            "db_path",
+            "dataset_signature",
+            "feedback_id",
+            "object_id",
+            "question",
+            "review_task_id",
+            "root_dir",
+            "task_id",
+            "title",
+        }
+        _check(isinstance(result, list), "governance audit not list")
+        _check(
+            all(not (forbidden_keys & set((item.get("details") or {}).keys())) for item in result),
+            "governance audit leaked sensitive detail keys",
+        )
+
+    test("API GET /governance/audit", t_governance_audit)
 
     print("\n========== Smoke Test Summary ==========")
     print(f"BASE_URL: {BASE_URL}")

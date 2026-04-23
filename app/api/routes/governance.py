@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query
 
 from app.core.config import SYNDROME_RULES
 from app.core.audit import query_events
+from app.core.public_payloads import public_audit_records
 from app.models.schemas import AuditRecord
 
 router = APIRouter(tags=["governance"])
@@ -18,7 +19,7 @@ def governance_audit(
     limit: int = Query(default=100, ge=1, le=1000),
 ) -> List[AuditRecord]:
     records = query_events(actor=actor, event_type=event_type, limit=limit)
-    return [AuditRecord(**item) for item in records]
+    return [AuditRecord(**item) for item in public_audit_records(records)]
 
 
 @router.get("/governance/rules")

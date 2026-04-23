@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT_DIR))
 
 from app.core.audit import query_events  # noqa: E402
 from app.core.config import SYNDROME_RULES  # noqa: E402
+from app.core.public_payloads import public_audit_records, public_professional_stats  # noqa: E402
 from app.services.knowledge_service import knowledge_service  # noqa: E402
 from app.services.overview_service import overview_service  # noqa: E402
 from app.services.platform_search_service import platform_search_service  # noqa: E402
@@ -149,13 +150,13 @@ def main() -> None:
 
     knowledge_items = knowledge_service.all()[:500]
     dashboard = overview_service.dashboard()
-    professional_stats = professional_knowledge_service.stats()
+    professional_stats = public_professional_stats(professional_knowledge_service.stats())
     professional_index = build_professional_search_index()
     review_payload = {
         "tasks": review_service.list_tasks(limit=240),
         "stats": review_service.stats(),
     }
-    audit_items = query_events(limit=400)
+    audit_items = public_audit_records(query_events(limit=400))
     rules_payload = {
         "count": len(SYNDROME_RULES),
         "rules": SYNDROME_RULES,
