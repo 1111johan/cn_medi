@@ -348,3 +348,4 @@
 {"event_id": "ef9a69c9-08d3-477d-aba8-2d63cdd0f0e2", "timestamp": "2026-04-22T07:31:58.911435", "actor": "visitor", "event_type": "smart_qa.ask", "details": {"mode": "text", "scenario": "科研传承", "risk_level": "caution", "attachment_count": 0, "question_length": 14}}
 {"event_id": "14d6f693-16eb-4e6d-b3cb-20caa4f28fd0", "timestamp": "2026-04-22T07:32:15.671074", "actor": "system", "event_type": "reason.trace", "details": {"has_top_candidate": true}}
 {"event_id": "395c53d5-8bc2-48db-aad2-9eb81bc145b4", "timestamp": "2026-04-22T07:32:23.807632", "actor": "system", "event_type": "reason.trace", "details": {"has_top_candidate": true}}
+{"event_id": "f4bcca3f-2c4a-452e-ae9c-f4e09ca91867", "timestamp": "2026-04-23T18:18:04.959171", "actor": "system", "event_type": "reason.trace", "details": {"has_top_candidate": true}}
